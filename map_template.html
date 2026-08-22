@@ -1,0 +1,427 @@
+<title>ASVAB Outcomes by ZIP — RS Albuquerque</title>
+
+<style>
+  /* Palette taken from marines.com design tokens:
+     semper-fi #991b20 · pinstripe #ad1f24 · dress-blues #001e2d
+     midnight #101728 · ocean #07405b · fringe #efc97b */
+  :root {
+    --ground:      #f1f3f4;
+    --panel:       #ffffff;
+    --ink:         #101728;
+    --ink-soft:    #4c515e;
+    --ink-faint:   #858a95;
+    --rule:        #e0e4e6;
+    --rule-strong: #c2c8cc;
+    --accent:      #991b20;
+    --accent-ink:  #ffffff;
+    --low:         #07405b;
+    --mid:         #cbc6bd;
+    --high:        #c2952c;
+    --land:        #e5e8ea;
+    --focus:       #991b20;
+    --shadow:      0 1px 2px rgba(16,23,40,.07), 0 10px 28px rgba(16,23,40,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #101728;
+      --panel:       #001e2d;
+      --ink:         #f2f4f4;
+      --ink-soft:    #a7b0b6;
+      --ink-faint:   #6b7681;
+      --rule:        #1e3040;
+      --rule-strong: #37505f;
+      --accent:      #c1575b;
+      --accent-ink:  #ffffff;
+      --low:         #4d90ab;
+      --mid:         #7d7870;
+      --high:        #efc97b;
+      --land:        #061e2c;
+      --focus:       #c1575b;
+      --shadow:      0 1px 2px rgba(0,0,0,.5), 0 10px 28px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#101728; --panel:#001e2d; --ink:#f2f4f4; --ink-soft:#a7b0b6;
+    --ink-faint:#6b7681; --rule:#1e3040; --rule-strong:#37505f;
+    --accent:#c1575b; --accent-ink:#ffffff;
+    --low:#4d90ab; --mid:#7d7870; --high:#efc97b; --land:#061e2c; --focus:#c1575b;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --ground:#f1f3f4; --panel:#ffffff; --ink:#101728; --ink-soft:#4c515e;
+    --ink-faint:#858a95; --rule:#e0e4e6; --rule-strong:#c2c8cc;
+    --accent:#991b20; --accent-ink:#ffffff;
+    --low:#07405b; --mid:#cbc6bd; --high:#c2952c; --land:#e5e8ea; --focus:#991b20;
+    --shadow:0 1px 2px rgba(16,23,40,.07), 0 10px 28px rgba(16,23,40,.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 72px;
+          display: flex; flex-direction: column; gap: 30px; }
+
+  h1, h2 { margin: 0; font-weight: 800; text-wrap: balance;
+           text-transform: uppercase; letter-spacing: -.01em; }
+  h1 { font-size: clamp(1.7rem, 1.1rem + 2.2vw, 2.55rem); line-height: 1.06; }
+  h2 { font-size: 1.05rem; letter-spacing: .02em; }
+
+  .eyebrow { font-size: .68rem; text-transform: uppercase; letter-spacing: .17em;
+             color: var(--accent); font-weight: 750; }
+  .lede { color: var(--ink-soft); max-width: 66ch; margin: 0; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  header .bar { height: 4px; width: 60px; background: var(--accent); margin: 6px 0 2px; }
+
+  .modes { display: flex; border: 1px solid var(--rule-strong); border-radius: 4px;
+           overflow: hidden; width: fit-content; background: var(--panel); }
+  .modes button {
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    padding: 11px 20px; font: inherit; font-size: .82rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft);
+    border-right: 1px solid var(--rule); display: flex; flex-direction: column;
+    gap: 2px; text-align: left; min-width: 186px;
+  }
+  .modes button:last-child { border-right: 0; }
+  .modes button span { font-size: .68rem; font-weight: 500; letter-spacing: .02em;
+                       text-transform: none; color: var(--ink-faint); }
+  .modes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .modes button[aria-pressed="true"] span { color: var(--accent-ink); opacity: .8; }
+  .modes button:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+           gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px;
+           overflow: hidden; }
+  .stat { background: var(--panel); padding: 15px 18px; display: flex; flex-direction: column; gap: 2px; }
+  .stat b { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums;
+            letter-spacing: -.02em; }
+  .stat small { font-size: .67rem; text-transform: uppercase; letter-spacing: .1em;
+                color: var(--ink-faint); font-weight: 700; }
+
+  .mapcard { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+             box-shadow: var(--shadow); overflow: hidden; }
+  .maptop { display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--rule); }
+  .filter { display: flex; align-items: center; gap: 10px; font-size: .78rem;
+            color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .filter input { accent-color: var(--accent); width: 130px; }
+  .filter output { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); min-width: 1.4em; }
+
+  .mapbody { display: grid; grid-template-columns: 1fr 236px; }
+  @media (max-width: 780px) { .mapbody { grid-template-columns: 1fr; } }
+  svg.map { display: block; width: 100%; height: auto; background: var(--ground); touch-action: manipulation; }
+  .state { fill: var(--land); stroke: var(--rule-strong); stroke-width: .9; }
+  .statelabel { fill: var(--ink-faint); font-size: 10.5px; letter-spacing: .2em;
+                text-transform: uppercase; font-weight: 750; }
+  .citydot { fill: var(--ink); }
+  .cityname { fill: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+  circle.zip { cursor: pointer; stroke: var(--panel); stroke-width: .8; transition: stroke-width .12s ease; }
+  circle.zip:hover, circle.zip.sel { stroke: var(--ink); stroke-width: 2; }
+  circle.zip:focus-visible { outline: none; stroke: var(--focus); stroke-width: 3; }
+
+  .rail { border-left: 1px solid var(--rule); padding: 18px; display: flex;
+          flex-direction: column; gap: 20px; }
+  @media (max-width: 780px) { .rail { border-left: 0; border-top: 1px solid var(--rule); } }
+  .rail h3 { margin: 0 0 7px; font-size: .66rem; text-transform: uppercase; letter-spacing: .12em;
+             color: var(--ink-faint); font-weight: 750; }
+  .ramp { height: 11px; border-radius: 2px; }
+  .ramplabels { display: flex; justify-content: space-between; font-size: .66rem;
+                color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-top: 5px; font-weight: 600; }
+  .sizes { display: flex; align-items: flex-end; gap: 13px; }
+  .sizes div { display: flex; flex-direction: column; align-items: center; gap: 5px;
+               font-size: .64rem; color: var(--ink-faint); font-weight: 600; }
+  .sizes i { display: block; border-radius: 50%; background: var(--mid); opacity: .8; }
+  .detail { display: flex; flex-direction: column; gap: 7px; font-size: .83rem; }
+  .detail .z { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
+  .detail dt { color: var(--ink-faint); font-size: .74rem; }
+  .detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .empty { color: var(--ink-faint); font-size: .79rem; font-style: italic; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; min-width: 560px; }
+  th, td { padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-faint);
+       font-weight: 750; position: sticky; top: 0; background: var(--panel); }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  td.v { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .chip { display: inline-block; padding: 1px 9px; border-radius: 2px; font-size: .71rem;
+          font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  .note { font-size: .84rem; color: var(--ink-soft); border-left: 3px solid var(--accent);
+          padding-left: 16px; display: flex; flex-direction: column; gap: 9px; max-width: 76ch; }
+  .note b { color: var(--ink); font-weight: 750; }
+  section { display: flex; flex-direction: column; gap: 13px; }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 28px 16px 56px; }
+    .modes { width: 100%; flex-direction: column; }
+    .modes button { min-width: 0; width: 100%; border-right: 0; border-bottom: 1px solid var(--rule); }
+    .modes button:last-child { border-bottom: 0; }
+    .maptop { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .filter { flex-wrap: wrap; width: 100%; }
+    .filter input { flex: 1 1 120px; width: auto; min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Recruiting Station Albuquerque &middot; FY25&ndash;FY26</div>
+    <h1>ASVAB outcomes by ZIP code</h1>
+    <div class="bar"></div>
+    <p class="lede">Where applicants clear the enlistment bar, and where they score into the top mental
+      groups. Bubble color is the odds relative to the command-wide baseline; bubble size is how many
+      applicants came from that ZIP.</p>
+  </header>
+
+  <div class="modes" role="group" aria-label="Choose outcome">
+    <button id="btnPass"  aria-pressed="true">Odds of passing<span>AFQT 31 or higher</span></button>
+    <button id="btnAlpha" aria-pressed="false">Odds of alpha<span>AFQT 50+, among those who passed</span></button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="mapcard">
+    <div class="maptop">
+      <h2 id="mapTitle">Odds of passing</h2>
+      <label class="filter">Min. applicants per ZIP
+        <input type="range" id="minN" min="1" max="20" value="3" step="1">
+        <output id="minNOut">3</output>
+      </label>
+    </div>
+    <div class="mapbody">
+      <svg class="map" id="map" role="img" aria-labelledby="mapTitle"></svg>
+      <div class="rail">
+        <div>
+          <h3>Odds vs. baseline</h3>
+          <div class="ramp" id="ramp"></div>
+          <div class="ramplabels"><span>0.4&times;</span><span>1.0&times;</span><span>2.5&times;</span></div>
+        </div>
+        <div>
+          <h3>Applicants</h3>
+          <div class="sizes" id="sizes"></div>
+        </div>
+        <div>
+          <h3>Selected ZIP</h3>
+          <div class="detail" id="detail"><span class="empty">Hover or tap a ZIP.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2 id="tableTitle">Strongest and weakest ZIPs</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>ZIP</th><th>Substation</th><th>Applicants</th><th>Raw rate</th><th>Adjusted</th><th>Odds vs. base</th><th>ZIP income</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="note">
+    <p><b>Rates are shrunk toward the baseline.</b> Half of these ZIPs sent two applicants or fewer, where
+      a raw rate of 0% or 100% means almost nothing. Each ZIP is pulled toward the command-wide rate in
+      proportion to how little data it has, so a ZIP needs roughly eight applicants before it moves much
+      on its own. The <b>Adjusted</b> column is what the map draws; <b>Raw rate</b> is the unadjusted
+      share, shown so the difference stays visible.</p>
+    <p><b>The two maps say different things.</b> Passing tracks education status &mdash; whether the applicant
+      is a high school senior is the strongest single predictor. Reaching alpha tracks geography and
+      income: ZIP mean income is the strongest univariate predictor of alpha, and applicants from the
+      highest-income quartile of ZIPs reach alpha 63.8% of the time against 45.0% in the lowest.</p>
+    <p><b>Coverage.</b> <span id="coverage"></span> ZIP income is IRS SOI 2022 mean adjusted gross income
+      per return. Positions are ZIP centroids from the Census gazetteer, so a bubble marks the center of a
+      ZIP area, not a home address. State outlines are drawn from the straight survey borders and are for
+      orientation only.</p>
+  </div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+/* ---------- projection ----------
+   Fixed geographic frame covering the recruiting area rather than a fit to the
+   data extent, so the state outlines land in a stable place and nothing is
+   clipped at an arbitrary edge. */
+const FRAME = {west: -115.2, east: -101.4, south: 30.5, north: 37.7};
+const kx = Math.cos(((FRAME.south + FRAME.north) / 2) * Math.PI / 180);
+const spanX = (FRAME.east - FRAME.west) * kx, spanY = FRAME.north - FRAME.south;
+const VB = {w: 640, h: Math.round(640 * spanY / spanX)};
+const px = lon => (lon - FRAME.west) * kx / spanX * VB.w;
+const py = lat => (FRAME.north - lat) / spanY * VB.h;
+
+/* ---------- diverging ramp: ocean -> neutral -> fringe gold ---------- */
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const hex2rgb = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); };
+const mix = (a, b, t) => { const A = hex2rgb(a), B = hex2rgb(b);
+  return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+function rampColor(or) {
+  const lo = Math.log(0.4), hi = Math.log(2.5);
+  const t = (Math.log(Math.max(0.4, Math.min(2.5, or))) - lo) / (hi - lo);
+  return t < 0.5 ? mix(css('--low'), css('--mid'), t * 2)
+                 : mix(css('--mid'), css('--high'), (t - 0.5) * 2);
+}
+const radius = n => 3.1 + Math.sqrt(n) * 2.05;
+
+/* ---------- static geography (straight survey borders only) ---------- */
+const STATES = [
+  {name:'Arizona',    box:[-114.82, 37.00, -109.05, 31.33], lab:[-112.6, 34.6]},
+  {name:'New Mexico', box:[-109.05, 37.00, -103.00, 31.78], lab:[-106.2, 34.9]},
+  {name:'Colorado',   box:[-109.05, 41.00, -102.04, 37.00], lab:[-106.5, 37.6]},
+  {name:'Utah',       box:[-114.05, 41.00, -109.05, 37.00], lab:[-111.6, 37.6]},
+  {name:'Texas',      box:[-103.00, 36.50, -100.00, 31.00], lab:[-101.6, 34.0]}
+];
+const CITIES = [
+  {n:'Albuquerque', lat:35.08, lon:-106.65}, {n:'Santa Fe', lat:35.69, lon:-105.94},
+  {n:'Farmington',  lat:36.73, lon:-108.19}, {n:'El Paso',  lat:31.77, lon:-106.44},
+  {n:'Flagstaff',   lat:35.20, lon:-111.65}, {n:'Mesa',     lat:33.42, lon:-111.83},
+  {n:'Roswell',     lat:33.39, lon:-104.52}, {n:'Hobbs',    lat:32.70, lon:-103.14}
+];
+
+/* ---------- state ---------- */
+let mode = 'pass', minN = 3, selected = null;
+const val   = d => mode === 'pass' ? d.orPass  : d.orAlpha;
+const prob  = d => mode === 'pass' ? d.pPass   : d.pAlpha;
+const raw   = d => mode === 'pass' ? d.rawPass : d.rawAlpha;
+const denom = d => mode === 'pass' ? d.n       : d.nPassed;
+const visible = () => DATA.zips.filter(d => val(d) != null && denom(d) >= minN);
+
+const SVG = 'http://www.w3.org/2000/svg';
+const el = (t, a) => { const e = document.createElementNS(SVG, t);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+const pct = x => (x * 100).toFixed(1) + '%';
+
+function drawMap() {
+  const svg = document.getElementById('map');
+  svg.setAttribute('viewBox', `0 0 ${VB.w} ${VB.h}`);
+  svg.textContent = '';
+  svg.appendChild(el('defs', {})).appendChild(el('clipPath', {id: 'frame'}))
+     .appendChild(el('rect', {x: 0, y: 0, width: VB.w, height: VB.h}));
+  const g = el('g', {'clip-path': 'url(#frame)'});
+  svg.appendChild(g);
+  for (const s of STATES) {
+    const [w, n, e, so] = s.box;
+    g.appendChild(el('rect', {class:'state', x:px(w), y:py(n), width:px(e)-px(w), height:py(so)-py(n)}));
+    const t = el('text', {class:'statelabel', x:px(s.lab[1]), y:py(s.lab[0]), 'text-anchor':'middle'});
+    t.textContent = s.name; g.appendChild(t);
+  }
+  const rows = visible().slice().sort((a, b) => b.n - a.n);
+  for (const d of rows) {
+    const c = el('circle', {
+      class: 'zip' + (selected === d.zip ? ' sel' : ''),
+      cx: px(d.lon).toFixed(1), cy: py(d.lat).toFixed(1), r: radius(denom(d)).toFixed(1),
+      fill: rampColor(val(d)), 'fill-opacity': .85, tabindex: '0', role: 'button',
+      'data-zip': d.zip,
+      'aria-label': `ZIP ${d.zip}, ${denom(d)} applicants, ${val(d).toFixed(2)} times baseline odds`
+    });
+    const show = () => { selected = d.zip; detail(d); paintSel(); };
+    c.addEventListener('mouseenter', show);
+    c.addEventListener('focus', show);
+    c.addEventListener('click', show);
+    g.appendChild(c);
+  }
+  for (const c of CITIES) {
+    g.appendChild(el('circle', {class:'citydot', cx:px(c.lon), cy:py(c.lat), r:1.9}));
+    const t = el('text', {class:'cityname', x:px(c.lon) + 5.5, y:py(c.lat) + 3.4});
+    t.textContent = c.n; g.appendChild(t);
+  }
+}
+const paintSel = () => document.querySelectorAll('circle.zip')
+  .forEach(c => c.classList.toggle('sel', c.dataset.zip === selected));
+
+function detail(d) {
+  const box = document.getElementById('detail');
+  if (!d) { box.innerHTML = '<span class="empty">Hover or tap a ZIP.</span>'; return; }
+  const or = val(d);
+  box.innerHTML = `
+    <div class="z">${d.zip}</div>
+    <div style="color:var(--ink-faint);font-size:.74rem;margin-top:-5px">${d.rss}</div>
+    <span class="chip" style="background:${rampColor(or)};color:#fff;align-self:flex-start">${or.toFixed(2)}&times; baseline</span>
+    <dl>
+      <dt>Applicants</dt><dd>${denom(d)}</dd>
+      <dt>Raw rate</dt><dd>${raw(d) == null ? '&mdash;' : pct(raw(d))}</dd>
+      <dt>Adjusted</dt><dd>${pct(prob(d))}</dd>
+      <dt>ZIP income</dt><dd>${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</dd>
+    </dl>`;
+}
+
+function drawTable() {
+  const rows = visible().slice().sort((a, b) => val(b) - val(a));
+  const pick = rows.length > 16 ? [...rows.slice(0, 8), null, ...rows.slice(-8)] : rows;
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  for (const d of pick) {
+    const tr = document.createElement('tr');
+    if (d === null) {
+      tr.innerHTML = `<td colspan="7" style="text-align:center;color:var(--ink-faint);font-size:.74rem">
+        ${rows.length - 16} more ZIPs between</td>`;
+      tr.style.cursor = 'default';
+    } else {
+      tr.innerHTML = `<td class="v">${d.zip}</td>
+        <td style="text-align:left;color:var(--ink-soft)">${d.rss}</td>
+        <td class="v">${denom(d)}</td>
+        <td class="v">${raw(d) == null ? '&mdash;' : pct(raw(d))}</td>
+        <td class="v">${pct(prob(d))}</td>
+        <td><span class="chip" style="background:${rampColor(val(d))};color:#fff">${val(d).toFixed(2)}&times;</span></td>
+        <td class="v">${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</td>`;
+      tr.addEventListener('click', () => { selected = d.zip; detail(d); paintSel(); });
+    }
+    tb.appendChild(tr);
+  }
+}
+
+function drawStats() {
+  const s = [
+    ['Applicants', DATA.totalApplicants.toLocaleString()],
+    ['Passed (31+)', `${DATA.totalPassed.toLocaleString()} · ${pct(DATA.priorPass)}`],
+    ['Alpha of those', `${DATA.totalAlpha.toLocaleString()} · ${pct(DATA.priorAlpha)}`],
+    ['ZIPs shown', String(visible().length)]
+  ];
+  document.getElementById('stats').innerHTML =
+    s.map(([k, v]) => `<div class="stat"><small>${k}</small><b>${v}</b></div>`).join('');
+}
+
+function drawLegend() {
+  const stops = [];
+  for (let i = 0; i <= 10; i++)
+    stops.push(rampColor(Math.exp(Math.log(0.4) + (Math.log(2.5) - Math.log(0.4)) * i / 10)));
+  document.getElementById('ramp').style.background = `linear-gradient(90deg, ${stops.join(',')})`;
+  document.getElementById('sizes').innerHTML = [1, 10, 40]
+    .map(n => `<div><i style="width:${radius(n)*2}px;height:${radius(n)*2}px"></i>${n}</div>`).join('');
+}
+
+function render() {
+  document.getElementById('mapTitle').textContent =
+    mode === 'pass' ? 'Odds of passing' : 'Odds of alpha';
+  document.getElementById('tableTitle').textContent =
+    mode === 'pass' ? 'Strongest and weakest ZIPs for passing' : 'Strongest and weakest ZIPs for alpha';
+  document.getElementById('btnPass').setAttribute('aria-pressed', mode === 'pass');
+  document.getElementById('btnAlpha').setAttribute('aria-pressed', mode === 'alpha');
+  drawLegend(); drawStats(); drawMap(); drawTable();
+  const cur = DATA.zips.find(d => d.zip === selected);
+  detail(cur && val(cur) != null && denom(cur) >= minN ? cur : null);
+}
+
+document.getElementById('btnPass').onclick  = () => { mode = 'pass';  render(); };
+document.getElementById('btnAlpha').onclick = () => { mode = 'alpha'; render(); };
+const slider = document.getElementById('minN');
+slider.addEventListener('input', () => {
+  minN = +slider.value;
+  document.getElementById('minNOut').textContent = minN;
+  render();
+});
+document.getElementById('coverage').textContent =
+  `${DATA.nCore} ZIPs in the recruiting area are mapped; ${DATA.nOutside} ZIPs holding ` +
+  `${DATA.applicantsOutside} applicants fall outside the region and are not shown.`;
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+new MutationObserver(render).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+render();
+</script>

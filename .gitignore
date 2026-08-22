@@ -19,3 +19,12 @@ data/processed/*
 
 # OS
 .DS_Store
+dist/
+*.pkl
+cv_*.csv
+rfimp_*.csv
+perm_importance_*.csv
+coefficients_*.csv
+univariate_*.csv
+zipmap.json
+asvab_zip_map.html
