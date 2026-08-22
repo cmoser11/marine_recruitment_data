@@ -25,3 +25,6 @@ perm_importance_*.csv
 coefficients_*.csv
 univariate_*.csv
 zipmap.json
+
+# Local Netlify folder
+.netlify
