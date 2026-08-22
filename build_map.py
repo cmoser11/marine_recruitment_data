@@ -7,6 +7,8 @@ payload = dict(zips=core, priorPass=d["priorPass"], priorAlpha=d["priorAlpha"], 
                nOutside=len(d["zips"]) - len(core),
                applicantsOutside=sum(r["n"] for r in d["zips"]) - sum(r["n"] for r in core))
 html = pathlib.Path("map_template.html").read_text()
+states = pathlib.Path("states_compact.json").read_text()
 out = html.replace("/*__DATA__*/null", json.dumps(payload, separators=(",", ":")))
+out = out.replace("/*__STATES__*/null", states)
 pathlib.Path("asvab_zip_map.html").write_text(out)
 print("wrote asvab_zip_map.html", len(out), "bytes |", len(core), "zips")

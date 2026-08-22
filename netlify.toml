@@ -1,0 +1,14 @@
+# Static site: the page is generated locally by build_map.py and committed to
+# dist/, so Netlify has no build step to run. Rebuild with:
+#   .venv/bin/python build_map.py && cp asvab_zip_map.html dist/index.html
+# then commit dist/index.html and Netlify redeploys on push.
+[build]
+  publish = "dist"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "no-referrer"

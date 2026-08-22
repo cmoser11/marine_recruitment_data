@@ -159,6 +159,25 @@
   .note b { color: var(--ink); font-weight: 750; }
   section { display: flex; flex-direction: column; gap: 13px; }
 
+  .defs { display: grid; grid-template-columns: 168px 1fr; gap: 0; margin: 0;
+          border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); overflow: hidden; }
+  .defs dt { padding: 13px 16px; font-size: .72rem; font-weight: 750; text-transform: uppercase;
+             letter-spacing: .09em; color: var(--ink); border-top: 1px solid var(--rule);
+             background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .defs dd { margin: 0; padding: 13px 18px; font-size: .86rem; color: var(--ink-soft);
+             border-top: 1px solid var(--rule); max-width: 68ch; }
+  .defs dt:first-of-type, .defs dd:first-of-type { border-top: 0; }
+  .defs code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .82em;
+               background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px;
+               border-radius: 3px; white-space: nowrap; }
+  .defs b { color: var(--ink); font-weight: 700; }
+  .qual { color: var(--ink-faint); }
+  @media (max-width: 620px) {
+    .defs { grid-template-columns: 1fr; }
+    .defs dd { border-top: 0; padding-top: 0; }
+    .defs dt { background: transparent; }
+  }
+
   @media (max-width: 560px) {
     .wrap { padding: 28px 16px 56px; }
     .modes { width: 100%; flex-direction: column; }
@@ -226,6 +245,51 @@
     </div>
   </section>
 
+  <section id="definitions">
+    <h2>What the columns mean</h2>
+    <dl class="defs">
+      <dt>Applicants</dt>
+      <dd>One row per person, not per record. The raw export repeats an applicant once for every lead
+        source that touched them &mdash; up to six times &mdash; so those rows are collapsed first.
+        In the alpha view this counts only applicants who passed, since alpha is measured among them.</dd>
+
+      <dt>Passing</dt>
+      <dd>AFQT of 31 or higher. Below 31 an applicant is mental group IV and needs an administrative
+        review by the district commanding officer. <span class="qual">The EPM's Table 3-6 minimum is
+        actually tier-dependent &mdash; 21 for Tier I, 31 for Tier II, 50 for Tier III &mdash; but 31 is
+        the working threshold used here.</span></dd>
+
+      <dt>Alpha</dt>
+      <dd>AFQT of 50 or higher &mdash; mental groups I through IIIA. Bravo is IIIB, 31 to 49.
+        <span class="qual">Per MCRCO 1100.1, IIIA starts at 50, not 51.</span></dd>
+
+      <dt>Raw rate</dt>
+      <dd>The plain share, straight from the data: applicants from that ZIP who cleared the bar, divided
+        by applicants from that ZIP. Honest but jumpy &mdash; with two applicants it can only ever read
+        0%, 50%, or 100%, which is why it isn't what the map draws.</dd>
+
+      <dt>Adjusted</dt>
+      <dd>The raw rate pulled toward the command-wide average, by an amount that depends on how thin the
+        ZIP's data is. A ZIP with 70 applicants barely moves; a ZIP with one applicant moves almost all
+        the way to the average. The formula is
+        <code>(cleared&nbsp;+&nbsp;8&nbsp;&times;&nbsp;baseline)&nbsp;&divide;&nbsp;(applicants&nbsp;+&nbsp;8)</code>,
+        so a ZIP needs roughly eight applicants before it carries its own weight. This is what the map
+        colors.</dd>
+
+      <dt>Odds vs. base</dt>
+      <dd>How that ZIP's adjusted odds compare with the command-wide odds. Odds are
+        <code>rate&nbsp;&divide;&nbsp;(1&nbsp;&minus;&nbsp;rate)</code>, so a 60% rate is odds of 1.5.
+        Dividing the ZIP's odds by the baseline odds gives the multiplier: <b>1.00&times; is exactly
+        average</b>, 2.00&times; is double the odds. <span class="qual">Double the odds is not double the
+        rate &mdash; going from 50% to 67% doubles the odds.</span></dd>
+
+      <dt>ZIP income</dt>
+      <dd>Mean adjusted gross income per tax return in that ZIP, from IRS Statistics of Income 2022. It
+        describes the economic conditions of the area an applicant comes from &mdash; <span class="qual">it
+        is not that applicant's or their family's income.</span></dd>
+    </dl>
+  </section>
+
   <div class="note">
     <p><b>Rates are shrunk toward the baseline.</b> Half of these ZIPs sent two applicants or fewer, where
       a raw rate of 0% or 100% means almost nothing. Each ZIP is pulled toward the command-wide rate in
@@ -271,13 +335,7 @@ function rampColor(or) {
 const radius = n => 3.1 + Math.sqrt(n) * 2.05;
 
 /* ---------- static geography (straight survey borders only) ---------- */
-const STATES = [
-  {name:'Arizona',    box:[-114.82, 37.00, -109.05, 31.33], lab:[-112.6, 34.6]},
-  {name:'New Mexico', box:[-109.05, 37.00, -103.00, 31.78], lab:[-106.2, 34.9]},
-  {name:'Colorado',   box:[-109.05, 41.00, -102.04, 37.00], lab:[-106.5, 37.6]},
-  {name:'Utah',       box:[-114.05, 41.00, -109.05, 37.00], lab:[-111.6, 37.6]},
-  {name:'Texas',      box:[-103.00, 36.50, -100.00, 31.00], lab:[-101.6, 34.0]}
-];
+const STATES = /*__STATES__*/null;
 const CITIES = [
   {n:'Albuquerque', lat:35.08, lon:-106.65}, {n:'Santa Fe', lat:35.69, lon:-105.94},
   {n:'Farmington',  lat:36.73, lon:-108.19}, {n:'El Paso',  lat:31.77, lon:-106.44},
@@ -286,7 +344,10 @@ const CITIES = [
 ];
 
 /* ---------- state ---------- */
-let mode = 'pass', minN = 3, selected = null;
+let mode = 'pass', selected = null;
+// browsers restore a range input's position across reloads, so take the
+// initial threshold from the control itself rather than a hardcoded default
+let minN = +document.getElementById('minN').value;
 const val   = d => mode === 'pass' ? d.orPass  : d.orAlpha;
 const prob  = d => mode === 'pass' ? d.pPass   : d.pAlpha;
 const raw   = d => mode === 'pass' ? d.rawPass : d.rawAlpha;
@@ -306,11 +367,17 @@ function drawMap() {
      .appendChild(el('rect', {x: 0, y: 0, width: VB.w, height: VB.h}));
   const g = el('g', {'clip-path': 'url(#frame)'});
   svg.appendChild(g);
-  for (const s of STATES) {
-    const [w, n, e, so] = s.box;
-    g.appendChild(el('rect', {class:'state', x:px(w), y:py(n), width:px(e)-px(w), height:py(so)-py(n)}));
-    const t = el('text', {class:'statelabel', x:px(s.lab[1]), y:py(s.lab[0]), 'text-anchor':'middle'});
-    t.textContent = s.name; g.appendChild(t);
+  for (const st of STATES) {
+    const d = st.rings.map(r =>
+      'M' + r.map(([lon, lat]) => `${px(lon).toFixed(1)},${py(lat).toFixed(1)}`).join('L') + 'Z').join('');
+    g.appendChild(el('path', {class: 'state', d}));
+  }
+  for (const st of STATES) {
+    if (!st.lab) continue;
+    const x = px(st.lab[1]), y = py(st.lab[0]);
+    if (x < 4 || x > VB.w - 4 || y < 8 || y > VB.h - 4) continue;
+    const t = el('text', {class:'statelabel', x, y, 'text-anchor':'middle'});
+    t.textContent = st.ab; g.appendChild(t);
   }
   const rows = visible().slice().sort((a, b) => b.n - a.n);
   for (const d of rows) {
@@ -412,6 +479,7 @@ function render() {
 document.getElementById('btnPass').onclick  = () => { mode = 'pass';  render(); };
 document.getElementById('btnAlpha').onclick = () => { mode = 'alpha'; render(); };
 const slider = document.getElementById('minN');
+document.getElementById('minNOut').textContent = minN;
 slider.addEventListener('input', () => {
   minN = +slider.value;
   document.getElementById('minNOut').textContent = minN;

@@ -1,0 +1,495 @@
+<title>ASVAB Outcomes by ZIP — RS Albuquerque</title>
+
+<style>
+  /* Palette taken from marines.com design tokens:
+     semper-fi #991b20 · pinstripe #ad1f24 · dress-blues #001e2d
+     midnight #101728 · ocean #07405b · fringe #efc97b */
+  :root {
+    --ground:      #f1f3f4;
+    --panel:       #ffffff;
+    --ink:         #101728;
+    --ink-soft:    #4c515e;
+    --ink-faint:   #858a95;
+    --rule:        #e0e4e6;
+    --rule-strong: #c2c8cc;
+    --accent:      #991b20;
+    --accent-ink:  #ffffff;
+    --low:         #07405b;
+    --mid:         #cbc6bd;
+    --high:        #c2952c;
+    --land:        #e5e8ea;
+    --focus:       #991b20;
+    --shadow:      0 1px 2px rgba(16,23,40,.07), 0 10px 28px rgba(16,23,40,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:      #101728;
+      --panel:       #001e2d;
+      --ink:         #f2f4f4;
+      --ink-soft:    #a7b0b6;
+      --ink-faint:   #6b7681;
+      --rule:        #1e3040;
+      --rule-strong: #37505f;
+      --accent:      #c1575b;
+      --accent-ink:  #ffffff;
+      --low:         #4d90ab;
+      --mid:         #7d7870;
+      --high:        #efc97b;
+      --land:        #061e2c;
+      --focus:       #c1575b;
+      --shadow:      0 1px 2px rgba(0,0,0,.5), 0 10px 28px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#101728; --panel:#001e2d; --ink:#f2f4f4; --ink-soft:#a7b0b6;
+    --ink-faint:#6b7681; --rule:#1e3040; --rule-strong:#37505f;
+    --accent:#c1575b; --accent-ink:#ffffff;
+    --low:#4d90ab; --mid:#7d7870; --high:#efc97b; --land:#061e2c; --focus:#c1575b;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 28px rgba(0,0,0,.4);
+  }
+  :root[data-theme="light"] {
+    --ground:#f1f3f4; --panel:#ffffff; --ink:#101728; --ink-soft:#4c515e;
+    --ink-faint:#858a95; --rule:#e0e4e6; --rule-strong:#c2c8cc;
+    --accent:#991b20; --accent-ink:#ffffff;
+    --low:#07405b; --mid:#cbc6bd; --high:#c2952c; --land:#e5e8ea; --focus:#991b20;
+    --shadow:0 1px 2px rgba(16,23,40,.07), 0 10px 28px rgba(16,23,40,.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 40px 24px 72px;
+          display: flex; flex-direction: column; gap: 30px; }
+
+  h1, h2 { margin: 0; font-weight: 800; text-wrap: balance;
+           text-transform: uppercase; letter-spacing: -.01em; }
+  h1 { font-size: clamp(1.7rem, 1.1rem + 2.2vw, 2.55rem); line-height: 1.06; }
+  h2 { font-size: 1.05rem; letter-spacing: .02em; }
+
+  .eyebrow { font-size: .68rem; text-transform: uppercase; letter-spacing: .17em;
+             color: var(--accent); font-weight: 750; }
+  .lede { color: var(--ink-soft); max-width: 66ch; margin: 0; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  header .bar { height: 4px; width: 60px; background: var(--accent); margin: 6px 0 2px; }
+
+  .modes { display: flex; border: 1px solid var(--rule-strong); border-radius: 4px;
+           overflow: hidden; width: fit-content; background: var(--panel); }
+  .modes button {
+    appearance: none; border: 0; background: transparent; cursor: pointer;
+    padding: 11px 20px; font: inherit; font-size: .82rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em; color: var(--ink-soft);
+    border-right: 1px solid var(--rule); display: flex; flex-direction: column;
+    gap: 2px; text-align: left; min-width: 186px;
+  }
+  .modes button:last-child { border-right: 0; }
+  .modes button span { font-size: .68rem; font-weight: 500; letter-spacing: .02em;
+                       text-transform: none; color: var(--ink-faint); }
+  .modes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .modes button[aria-pressed="true"] span { color: var(--accent-ink); opacity: .8; }
+  .modes button:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
+           gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px;
+           overflow: hidden; }
+  .stat { background: var(--panel); padding: 15px 18px; display: flex; flex-direction: column; gap: 2px; }
+  .stat b { font-size: 1.45rem; font-weight: 800; font-variant-numeric: tabular-nums;
+            letter-spacing: -.02em; }
+  .stat small { font-size: .67rem; text-transform: uppercase; letter-spacing: .1em;
+                color: var(--ink-faint); font-weight: 700; }
+
+  .mapcard { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+             box-shadow: var(--shadow); overflow: hidden; }
+  .maptop { display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+            justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--rule); }
+  .filter { display: flex; align-items: center; gap: 10px; font-size: .78rem;
+            color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+  .filter input { accent-color: var(--accent); width: 130px; }
+  .filter output { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--ink); min-width: 1.4em; }
+
+  .mapbody { display: grid; grid-template-columns: 1fr 236px; }
+  @media (max-width: 780px) { .mapbody { grid-template-columns: 1fr; } }
+  svg.map { display: block; width: 100%; height: auto; background: var(--ground); touch-action: manipulation; }
+  .state { fill: var(--land); stroke: var(--rule-strong); stroke-width: .9; }
+  .statelabel { fill: var(--ink-faint); font-size: 10.5px; letter-spacing: .2em;
+                text-transform: uppercase; font-weight: 750; }
+  .citydot { fill: var(--ink); }
+  .cityname { fill: var(--ink-soft); font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+  circle.zip { cursor: pointer; stroke: var(--panel); stroke-width: .8; transition: stroke-width .12s ease; }
+  circle.zip:hover, circle.zip.sel { stroke: var(--ink); stroke-width: 2; }
+  circle.zip:focus-visible { outline: none; stroke: var(--focus); stroke-width: 3; }
+
+  .rail { border-left: 1px solid var(--rule); padding: 18px; display: flex;
+          flex-direction: column; gap: 20px; }
+  @media (max-width: 780px) { .rail { border-left: 0; border-top: 1px solid var(--rule); } }
+  .rail h3 { margin: 0 0 7px; font-size: .66rem; text-transform: uppercase; letter-spacing: .12em;
+             color: var(--ink-faint); font-weight: 750; }
+  .ramp { height: 11px; border-radius: 2px; }
+  .ramplabels { display: flex; justify-content: space-between; font-size: .66rem;
+                color: var(--ink-faint); font-variant-numeric: tabular-nums; margin-top: 5px; font-weight: 600; }
+  .sizes { display: flex; align-items: flex-end; gap: 13px; }
+  .sizes div { display: flex; flex-direction: column; align-items: center; gap: 5px;
+               font-size: .64rem; color: var(--ink-faint); font-weight: 600; }
+  .sizes i { display: block; border-radius: 50%; background: var(--mid); opacity: .8; }
+  .detail { display: flex; flex-direction: column; gap: 7px; font-size: .83rem; }
+  .detail .z { font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
+  .detail dt { color: var(--ink-faint); font-size: .74rem; }
+  .detail dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .empty { color: var(--ink-faint); font-size: .79rem; font-style: italic; }
+
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; min-width: 560px; }
+  th, td { padding: 9px 14px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-faint);
+       font-weight: 750; position: sticky; top: 0; background: var(--panel); }
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+  td.v { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .chip { display: inline-block; padding: 1px 9px; border-radius: 2px; font-size: .71rem;
+          font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  .note { font-size: .84rem; color: var(--ink-soft); border-left: 3px solid var(--accent);
+          padding-left: 16px; display: flex; flex-direction: column; gap: 9px; max-width: 76ch; }
+  .note b { color: var(--ink); font-weight: 750; }
+  section { display: flex; flex-direction: column; gap: 13px; }
+
+  .defs { display: grid; grid-template-columns: 168px 1fr; gap: 0; margin: 0;
+          border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); overflow: hidden; }
+  .defs dt { padding: 13px 16px; font-size: .72rem; font-weight: 750; text-transform: uppercase;
+             letter-spacing: .09em; color: var(--ink); border-top: 1px solid var(--rule);
+             background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .defs dd { margin: 0; padding: 13px 18px; font-size: .86rem; color: var(--ink-soft);
+             border-top: 1px solid var(--rule); max-width: 68ch; }
+  .defs dt:first-of-type, .defs dd:first-of-type { border-top: 0; }
+  .defs code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .82em;
+               background: color-mix(in srgb, var(--ink) 8%, transparent); padding: 1px 5px;
+               border-radius: 3px; white-space: nowrap; }
+  .defs b { color: var(--ink); font-weight: 700; }
+  .qual { color: var(--ink-faint); }
+  @media (max-width: 620px) {
+    .defs { grid-template-columns: 1fr; }
+    .defs dd { border-top: 0; padding-top: 0; }
+    .defs dt { background: transparent; }
+  }
+
+  @media (max-width: 560px) {
+    .wrap { padding: 28px 16px 56px; }
+    .modes { width: 100%; flex-direction: column; }
+    .modes button { min-width: 0; width: 100%; border-right: 0; border-bottom: 1px solid var(--rule); }
+    .modes button:last-child { border-bottom: 0; }
+    .maptop { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .filter { flex-wrap: wrap; width: 100%; }
+    .filter input { flex: 1 1 120px; width: auto; min-width: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Recruiting Station Albuquerque &middot; FY25&ndash;FY26</div>
+    <h1>ASVAB outcomes by ZIP code</h1>
+    <div class="bar"></div>
+    <p class="lede">Where applicants clear the enlistment bar, and where they score into the top mental
+      groups. Bubble color is the odds relative to the command-wide baseline; bubble size is how many
+      applicants came from that ZIP.</p>
+  </header>
+
+  <div class="modes" role="group" aria-label="Choose outcome">
+    <button id="btnPass"  aria-pressed="true">Odds of passing<span>AFQT 31 or higher</span></button>
+    <button id="btnAlpha" aria-pressed="false">Odds of alpha<span>AFQT 50+, among those who passed</span></button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="mapcard">
+    <div class="maptop">
+      <h2 id="mapTitle">Odds of passing</h2>
+      <label class="filter">Min. applicants per ZIP
+        <input type="range" id="minN" min="1" max="20" value="3" step="1">
+        <output id="minNOut">3</output>
+      </label>
+    </div>
+    <div class="mapbody">
+      <svg class="map" id="map" role="img" aria-labelledby="mapTitle"></svg>
+      <div class="rail">
+        <div>
+          <h3>Odds vs. baseline</h3>
+          <div class="ramp" id="ramp"></div>
+          <div class="ramplabels"><span>0.4&times;</span><span>1.0&times;</span><span>2.5&times;</span></div>
+        </div>
+        <div>
+          <h3>Applicants</h3>
+          <div class="sizes" id="sizes"></div>
+        </div>
+        <div>
+          <h3>Selected ZIP</h3>
+          <div class="detail" id="detail"><span class="empty">Hover or tap a ZIP.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2 id="tableTitle">Strongest and weakest ZIPs</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>ZIP</th><th>Substation</th><th>Applicants</th><th>Raw rate</th><th>Adjusted</th><th>Odds vs. base</th><th>ZIP income</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="definitions">
+    <h2>What the columns mean</h2>
+    <dl class="defs">
+      <dt>Applicants</dt>
+      <dd>One row per person, not per record. The raw export repeats an applicant once for every lead
+        source that touched them &mdash; up to six times &mdash; so those rows are collapsed first.
+        In the alpha view this counts only applicants who passed, since alpha is measured among them.</dd>
+
+      <dt>Passing</dt>
+      <dd>AFQT of 31 or higher. Below 31 an applicant is mental group IV and needs an administrative
+        review by the district commanding officer. <span class="qual">The EPM's Table 3-6 minimum is
+        actually tier-dependent &mdash; 21 for Tier I, 31 for Tier II, 50 for Tier III &mdash; but 31 is
+        the working threshold used here.</span></dd>
+
+      <dt>Alpha</dt>
+      <dd>AFQT of 50 or higher &mdash; mental groups I through IIIA. Bravo is IIIB, 31 to 49.
+        <span class="qual">Per MCRCO 1100.1, IIIA starts at 50, not 51.</span></dd>
+
+      <dt>Raw rate</dt>
+      <dd>The plain share, straight from the data: applicants from that ZIP who cleared the bar, divided
+        by applicants from that ZIP. Honest but jumpy &mdash; with two applicants it can only ever read
+        0%, 50%, or 100%, which is why it isn't what the map draws.</dd>
+
+      <dt>Adjusted</dt>
+      <dd>The raw rate pulled toward the command-wide average, by an amount that depends on how thin the
+        ZIP's data is. A ZIP with 70 applicants barely moves; a ZIP with one applicant moves almost all
+        the way to the average. The formula is
+        <code>(cleared&nbsp;+&nbsp;8&nbsp;&times;&nbsp;baseline)&nbsp;&divide;&nbsp;(applicants&nbsp;+&nbsp;8)</code>,
+        so a ZIP needs roughly eight applicants before it carries its own weight. This is what the map
+        colors.</dd>
+
+      <dt>Odds vs. base</dt>
+      <dd>How that ZIP's adjusted odds compare with the command-wide odds. Odds are
+        <code>rate&nbsp;&divide;&nbsp;(1&nbsp;&minus;&nbsp;rate)</code>, so a 60% rate is odds of 1.5.
+        Dividing the ZIP's odds by the baseline odds gives the multiplier: <b>1.00&times; is exactly
+        average</b>, 2.00&times; is double the odds. <span class="qual">Double the odds is not double the
+        rate &mdash; going from 50% to 67% doubles the odds.</span></dd>
+
+      <dt>ZIP income</dt>
+      <dd>Mean adjusted gross income per tax return in that ZIP, from IRS Statistics of Income 2022. It
+        describes the economic conditions of the area an applicant comes from &mdash; <span class="qual">it
+        is not that applicant's or their family's income.</span></dd>
+    </dl>
+  </section>
+
+  <div class="note">
+    <p><b>Rates are shrunk toward the baseline.</b> Half of these ZIPs sent two applicants or fewer, where
+      a raw rate of 0% or 100% means almost nothing. Each ZIP is pulled toward the command-wide rate in
+      proportion to how little data it has, so a ZIP needs roughly eight applicants before it moves much
+      on its own. The <b>Adjusted</b> column is what the map draws; <b>Raw rate</b> is the unadjusted
+      share, shown so the difference stays visible.</p>
+    <p><b>The two maps say different things.</b> Passing tracks education status &mdash; whether the applicant
+      is a high school senior is the strongest single predictor. Reaching alpha tracks geography and
+      income: ZIP mean income is the strongest univariate predictor of alpha, and applicants from the
+      highest-income quartile of ZIPs reach alpha 63.8% of the time against 45.0% in the lowest.</p>
+    <p><b>Coverage.</b> <span id="coverage"></span> ZIP income is IRS SOI 2022 mean adjusted gross income
+      per return. Positions are ZIP centroids from the Census gazetteer, so a bubble marks the center of a
+      ZIP area, not a home address. State outlines are drawn from the straight survey borders and are for
+      orientation only.</p>
+  </div>
+</div>
+
+<script>
+const DATA = {"zips":[{"zip":"79022","lat":36.0981,"lon":-102.6069,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":92.7,"rss":"AMARILLO"},{"zip":"79035","lat":34.6816,"lon":-102.7819,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.5332,"rawAlpha":0.5,"orPass":1.612,"orAlpha":0.935,"agi":63.7,"rss":"ROSWELL"},{"zip":"79119","lat":35.1091,"lon":-102.0179,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":135.1,"rss":"AMARILLO"},{"zip":"79323","lat":32.9331,"lon":-102.9046,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":1.612,"orAlpha":0.67,"agi":75.4,"rss":"ROSWELL"},{"zip":"79325","lat":34.4143,"lon":-102.9343,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":71.7,"rss":"ROSWELL"},{"zip":"79339","lat":33.8866,"lon":-102.3549,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":54.9,"rss":"LUBBOCK"},{"zip":"79347","lat":34.1862,"lon":-102.7979,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":58.1,"rss":"ROSWELL"},{"zip":"79407","lat":33.5615,"lon":-102.0857,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":83.2,"rss":"LUBBOCK"},{"zip":"79707","lat":32.0374,"lon":-102.1952,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":189.6,"rss":"EL PASO WEST"},{"zip":"79714","lat":32.3123,"lon":-102.6402,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":89.4,"rss":"ODESSA"},{"zip":"79821","lat":31.9768,"lon":-106.5993,"n":4,"nPassed":3,"pPass":0.7949,"rawPass":0.75,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":0.866,"orAlpha":1.139,"agi":43.9,"rss":"EL PASO WEST"},{"zip":"79835","lat":31.9357,"lon":-106.5961,"n":6,"nPassed":3,"pPass":0.6813,"rawPass":0.5,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":0.478,"orAlpha":1.139,"agi":41.7,"rss":"MESA"},{"zip":"79836","lat":31.5701,"lon":-106.2116,"n":7,"nPassed":7,"pPass":0.9026,"rawPass":1.0,"pAlpha":0.6266,"rawAlpha":0.7143,"orPass":2.071,"orAlpha":1.374,"agi":45.7,"rss":"EL PASO EAST"},{"zip":"79838","lat":31.4863,"lon":-106.1611,"n":6,"nPassed":5,"pPass":0.8242,"rawPass":0.8333,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":1.048,"orAlpha":0.794,"agi":null,"rss":"EL PASO EAST"},{"zip":"79839","lat":31.4208,"lon":-105.6422,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":41.2,"rss":"EL PASO EAST"},{"zip":"79849","lat":31.5669,"lon":-106.2584,"n":7,"nPassed":4,"pPass":0.7026,"rawPass":0.5714,"pAlpha":0.3665,"rawAlpha":0.0,"orPass":0.528,"orAlpha":0.474,"agi":33.2,"rss":"EL PASO EAST"},{"zip":"79851","lat":31.2795,"lon":-105.2579,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"EL PASO EAST"},{"zip":"79853","lat":31.4341,"lon":-106.0632,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.775,"orAlpha":0.961,"agi":null,"rss":"EL PASO EAST"},{"zip":"79901","lat":31.7594,"lon":-106.4801,"n":9,"nPassed":7,"pPass":0.7964,"rawPass":0.7778,"pAlpha":0.5599,"rawAlpha":0.5714,"orPass":0.874,"orAlpha":1.042,"agi":48.0,"rss":"EL PASO WEST"},{"zip":"79902","lat":31.7849,"lon":-106.4969,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.5332,"rawAlpha":0.5,"orPass":0.957,"orAlpha":0.935,"agi":75.0,"rss":"EL PASO WEST"},{"zip":"79903","lat":31.7862,"lon":-106.4419,"n":12,"nPassed":9,"pPass":0.7769,"rawPass":0.75,"pAlpha":0.3764,"rawAlpha":0.2222,"orPass":0.778,"orAlpha":0.494,"agi":41.3,"rss":"EL PASO WEST"},{"zip":"79904","lat":31.8492,"lon":-106.4648,"n":12,"nPassed":8,"pPass":0.7269,"rawPass":0.6667,"pAlpha":0.3999,"rawAlpha":0.25,"orPass":0.595,"orAlpha":0.546,"agi":43.8,"rss":"EL PASO WEST"},{"zip":"79905","lat":31.7661,"lon":-106.4262,"n":14,"nPassed":13,"pPass":0.8881,"rawPass":0.9286,"pAlpha":0.6856,"rawAlpha":0.7692,"orPass":1.774,"orAlpha":1.786,"agi":33.5,"rss":"EL PASO WEST"},{"zip":"79907","lat":31.7072,"lon":-106.3266,"n":23,"nPassed":20,"pPass":0.8561,"rawPass":0.8696,"pAlpha":0.5499,"rawAlpha":0.55,"orPass":1.329,"orAlpha":1.001,"agi":35.6,"rss":"EL PASO EAST"},{"zip":"79908","lat":31.8331,"lon":-106.365,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":59.8,"rss":"EL PASO WEST"},{"zip":"79911","lat":31.9361,"lon":-106.5357,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":103.6,"rss":"MESA"},{"zip":"79912","lat":31.8486,"lon":-106.5343,"n":28,"nPassed":23,"pPass":0.8205,"rawPass":0.8214,"pAlpha":0.529,"rawAlpha":0.5217,"orPass":1.022,"orAlpha":0.92,"agi":95.4,"rss":"MESA"},{"zip":"79915","lat":31.746,"lon":-106.3714,"n":20,"nPassed":16,"pPass":0.805,"rawPass":0.8,"pAlpha":0.6416,"rawAlpha":0.6875,"orPass":0.922,"orAlpha":1.466,"agi":35.2,"rss":"EL PASO WEST"},{"zip":"79922","lat":31.8104,"lon":-106.556,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":214.5,"rss":"MESA"},{"zip":"79924","lat":31.9022,"lon":-106.4135,"n":50,"nPassed":39,"pPass":0.7852,"rawPass":0.78,"pAlpha":0.4978,"rawAlpha":0.4872,"orPass":0.817,"orAlpha":0.812,"agi":41.8,"rss":"EL PASO WEST"},{"zip":"79925","lat":31.8053,"lon":-106.3688,"n":17,"nPassed":13,"pPass":0.7815,"rawPass":0.7647,"pAlpha":0.638,"rawAlpha":0.6923,"orPass":0.8,"orAlpha":1.443,"agi":56.7,"rss":"EL PASO WEST"},{"zip":"79927","lat":31.6454,"lon":-106.2749,"n":30,"nPassed":25,"pPass":0.83,"rawPass":0.8333,"pAlpha":0.4666,"rawAlpha":0.44,"orPass":1.091,"orAlpha":0.716,"agi":39.5,"rss":"EL PASO EAST"},{"zip":"79928","lat":31.6786,"lon":-106.1151,"n":73,"nPassed":60,"pPass":0.8215,"rawPass":0.8219,"pAlpha":0.5059,"rawAlpha":0.5,"orPass":1.028,"orAlpha":0.838,"agi":55.1,"rss":"EL PASO EAST"},{"zip":"79930","lat":31.8104,"lon":-106.469,"n":9,"nPassed":8,"pPass":0.8552,"rawPass":0.8889,"pAlpha":0.5249,"rawAlpha":0.5,"orPass":1.32,"orAlpha":0.905,"agi":39.2,"rss":"EL PASO WEST"},{"zip":"79932","lat":31.875,"lon":-106.608,"n":23,"nPassed":20,"pPass":0.8561,"rawPass":0.8696,"pAlpha":0.7642,"rawAlpha":0.85,"orPass":1.329,"orAlpha":2.654,"agi":82.0,"rss":"MESA"},{"zip":"79934","lat":31.9507,"lon":-106.4335,"n":9,"nPassed":6,"pPass":0.7376,"rawPass":0.6667,"pAlpha":0.5285,"rawAlpha":0.5,"orPass":0.628,"orAlpha":0.918,"agi":59.0,"rss":"EL PASO WEST"},{"zip":"79935","lat":31.7681,"lon":-106.3303,"n":12,"nPassed":10,"pPass":0.8269,"rawPass":0.8333,"pAlpha":0.411,"rawAlpha":0.3,"orPass":1.068,"orAlpha":0.571,"agi":53.8,"rss":"EL PASO EAST"},{"zip":"79936","lat":31.7737,"lon":-106.2954,"n":66,"nPassed":57,"pPass":0.8586,"rawPass":0.8636,"pAlpha":0.6369,"rawAlpha":0.6491,"orPass":1.357,"orAlpha":1.436,"agi":54.3,"rss":"EL PASO EAST"},{"zip":"79938","lat":31.8455,"lon":-106.0197,"n":70,"nPassed":59,"pPass":0.8402,"rawPass":0.8429,"pAlpha":0.5731,"rawAlpha":0.5763,"orPass":1.175,"orAlpha":1.099,"agi":59.4,"rss":"EL PASO EAST"},{"zip":"81122","lat":37.3018,"lon":-107.5374,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.4153,"rawAlpha":0.2,"orPass":1.765,"orAlpha":0.582,"agi":83.1,"rss":"FARMINGTON"},{"zip":"81303","lat":37.1244,"lon":-107.8548,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":95.5,"rss":"FARMINGTON"},{"zip":"81321","lat":37.313,"lon":-108.7345,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":61.9,"rss":"FARMINGTON"},{"zip":"81326","lat":37.1456,"lon":-108.1166,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":99.5,"rss":"FARMINGTON"},{"zip":"81334","lat":37.1461,"lon":-108.6129,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"FARMINGTON"},{"zip":"84710","lat":37.4692,"lon":-112.5106,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"FARMINGTON"},{"zip":"85225","lat":33.3178,"lon":-111.8305,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":70.4,"rss":"EL PASO EAST"},{"zip":"85254","lat":33.6146,"lon":-111.9497,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":170.8,"rss":"FLAGSTAFF"},{"zip":"85382","lat":33.6556,"lon":-112.2476,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":80.2,"rss":"FLAGSTAFF"},{"zip":"85501","lat":33.559,"lon":-110.7691,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":61.2,"rss":"FLAGSTAFF"},{"zip":"85541","lat":34.2233,"lon":-111.3473,"n":7,"nPassed":7,"pPass":0.9026,"rawPass":1.0,"pAlpha":0.4266,"rawAlpha":0.2857,"orPass":2.071,"orAlpha":0.609,"agi":71.0,"rss":"FLAGSTAFF"},{"zip":"85542","lat":33.3247,"lon":-110.3108,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":40.7,"rss":"FLAGSTAFF"},{"zip":"85550","lat":33.5485,"lon":-110.509,"n":2,"nPassed":0,"pPass":0.6539,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.422,"orAlpha":null,"agi":null,"rss":"FLAGSTAFF"},{"zip":"85643","lat":32.4607,"lon":-110.0003,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":56.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"85705","lat":32.2712,"lon":-110.9917,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":37.8,"rss":"FLAGSTAFF"},{"zip":"85712","lat":32.2529,"lon":-110.8866,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":58.2,"rss":"FLAGSTAFF"},{"zip":"85750","lat":32.298,"lon":-110.8449,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":171.0,"rss":"ALBUQUERQUE NORTH"},{"zip":"85901","lat":34.3148,"lon":-110.024,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.6165,"rawAlpha":0.75,"orPass":1.612,"orAlpha":1.317,"agi":69.2,"rss":"FLAGSTAFF"},{"zip":"85925","lat":34.0189,"lon":-109.3525,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":1.765,"orAlpha":0.794,"agi":64.3,"rss":"FLAGSTAFF"},{"zip":"85926","lat":33.7693,"lon":-109.9793,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":null,"rss":"FLAGSTAFF"},{"zip":"85929","lat":34.1712,"lon":-109.9651,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":70.0,"rss":"FLAGSTAFF"},{"zip":"85935","lat":34.1591,"lon":-109.9274,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":94.3,"rss":"FLAGSTAFF"},{"zip":"85936","lat":34.5917,"lon":-109.2904,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":57.5,"rss":"FLAGSTAFF"},{"zip":"85937","lat":34.5697,"lon":-110.0143,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":1.459,"orAlpha":1.682,"agi":67.7,"rss":"FLAGSTAFF"},{"zip":"85939","lat":34.4314,"lon":-110.0853,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86001","lat":35.3577,"lon":-111.7712,"n":7,"nPassed":7,"pPass":0.9026,"rawPass":1.0,"pAlpha":0.6932,"rawAlpha":0.8571,"orPass":2.071,"orAlpha":1.85,"agi":89.1,"rss":"FLAGSTAFF"},{"zip":"86004","lat":35.3809,"lon":-111.3735,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.6165,"rawAlpha":0.75,"orPass":1.612,"orAlpha":1.317,"agi":79.2,"rss":"FLAGSTAFF"},{"zip":"86005","lat":35.0877,"lon":-111.6192,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86015","lat":35.2228,"lon":-111.8141,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":90.9,"rss":"FLAGSTAFF"},{"zip":"86020","lat":35.9928,"lon":-111.4978,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86023","lat":36.0505,"lon":-112.0134,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86025","lat":34.8922,"lon":-110.0658,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.4908,"rawAlpha":0.3333,"orPass":1.459,"orAlpha":0.789,"agi":48.5,"rss":"FLAGSTAFF"},{"zip":"86031","lat":35.3635,"lon":-110.0666,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86033","lat":36.6773,"lon":-110.2563,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.5332,"rawAlpha":0.5,"orPass":0.957,"orAlpha":0.935,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86034","lat":35.7709,"lon":-110.1381,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":42.4,"rss":"FLAGSTAFF"},{"zip":"86040","lat":36.6596,"lon":-111.3857,"n":4,"nPassed":3,"pPass":0.7949,"rawPass":0.75,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":0.866,"orAlpha":1.682,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86044","lat":36.7355,"lon":-110.8026,"n":6,"nPassed":3,"pPass":0.6813,"rawPass":0.5,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":0.478,"orAlpha":1.139,"agi":38.5,"rss":"FLAGSTAFF"},{"zip":"86045","lat":36.142,"lon":-111.1237,"n":4,"nPassed":3,"pPass":0.7949,"rawPass":0.75,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":0.866,"orAlpha":1.682,"agi":48.2,"rss":"FLAGSTAFF"},{"zip":"86046","lat":35.4369,"lon":-112.1762,"n":9,"nPassed":8,"pPass":0.8552,"rawPass":0.8889,"pAlpha":0.6499,"rawAlpha":0.75,"orPass":1.32,"orAlpha":1.52,"agi":62.4,"rss":"FLAGSTAFF"},{"zip":"86047","lat":35.1807,"lon":-110.621,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":48.9,"rss":"FLAGSTAFF"},{"zip":"86053","lat":36.7582,"lon":-111.0564,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86054","lat":36.675,"lon":-110.6181,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":1.459,"orAlpha":1.139,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86320","lat":35.3747,"lon":-112.6239,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86324","lat":34.8201,"lon":-112.1079,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":71.0,"rss":"FLAGSTAFF"},{"zip":"86326","lat":34.6986,"lon":-112.0138,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":59.3,"rss":"FLAGSTAFF"},{"zip":"86335","lat":34.6483,"lon":-111.6633,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":54.0,"rss":"FLAGSTAFF"},{"zip":"86336","lat":34.8785,"lon":-111.858,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":1.459,"orAlpha":1.682,"agi":136.4,"rss":"FLAGSTAFF"},{"zip":"86502","lat":35.1431,"lon":-109.6095,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86503","lat":36.2169,"lon":-109.6824,"n":16,"nPassed":13,"pPass":0.8141,"rawPass":0.8125,"pAlpha":0.4475,"rawAlpha":0.3846,"orPass":0.979,"orAlpha":0.663,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86504","lat":35.8604,"lon":-109.1394,"n":3,"nPassed":0,"pPass":0.5944,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.328,"orAlpha":null,"agi":null,"rss":"FARMINGTON"},{"zip":"86505","lat":35.6238,"lon":-109.707,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.775,"orAlpha":0.961,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86507","lat":36.424,"lon":-109.2834,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":1.612,"orAlpha":0.67,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86510","lat":36.2272,"lon":-110.2721,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86511","lat":35.7399,"lon":-109.3689,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":null,"rss":"FARMINGTON"},{"zip":"86512","lat":35.0951,"lon":-109.2432,"n":4,"nPassed":2,"pPass":0.7116,"rawPass":0.5,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.551,"orAlpha":0.961,"agi":null,"rss":"FARMINGTON"},{"zip":"86514","lat":36.9059,"lon":-109.3258,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":43.0,"rss":"FARMINGTON"},{"zip":"86520","lat":36.0443,"lon":-109.9714,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86535","lat":36.8231,"lon":-109.8656,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86538","lat":36.4211,"lon":-109.6339,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86540","lat":35.9414,"lon":-109.444,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.4908,"rawAlpha":0.3333,"orPass":1.459,"orAlpha":0.789,"agi":null,"rss":"FLAGSTAFF"},{"zip":"86556","lat":36.2283,"lon":-109.2203,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"FARMINGTON"},{"zip":"87001","lat":35.4143,"lon":-106.3828,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":37.9,"rss":"ALBUQUERQUE NORTH"},{"zip":"87002","lat":34.6356,"lon":-106.8287,"n":11,"nPassed":9,"pPass":0.8178,"rawPass":0.8182,"pAlpha":0.3764,"rawAlpha":0.2222,"orPass":1.003,"orAlpha":0.494,"agi":52.1,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87004","lat":35.3689,"lon":-106.5972,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":59.5,"rss":"ALBUQUERQUE NORTH"},{"zip":"87005","lat":35.2655,"lon":-108.003,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":42.4,"rss":"FARMINGTON"},{"zip":"87006","lat":34.4845,"lon":-106.8435,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":53.0,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87008","lat":35.1495,"lon":-106.402,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":108.7,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87013","lat":35.8939,"lon":-107.3356,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":33.4,"rss":"ALBUQUERQUE NORTH"},{"zip":"87015","lat":35.0759,"lon":-106.183,"n":7,"nPassed":6,"pPass":0.8359,"rawPass":0.8571,"pAlpha":0.5285,"rawAlpha":0.5,"orPass":1.139,"orAlpha":0.918,"agi":71.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87016","lat":34.7552,"lon":-106.0156,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":50.7,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87020","lat":35.0144,"lon":-107.925,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.775,"orAlpha":0.961,"agi":50.3,"rss":"ALBUQUERQUE NORTH"},{"zip":"87026","lat":34.9811,"lon":-107.2077,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.775,"orAlpha":0.961,"agi":34.1,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87031","lat":34.7791,"lon":-106.7257,"n":29,"nPassed":22,"pPass":0.7713,"rawPass":0.7586,"pAlpha":0.6133,"rawAlpha":0.6364,"orPass":0.754,"orAlpha":1.299,"agi":58.1,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87032","lat":34.8679,"lon":-106.042,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87034","lat":34.9222,"lon":-107.6344,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FARMINGTON"},{"zip":"87035","lat":34.952,"lon":-105.9094,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":1.459,"orAlpha":1.139,"agi":47.0,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87037","lat":36.188,"lon":-107.7804,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":28.7,"rss":"FARMINGTON"},{"zip":"87038","lat":35.0876,"lon":-107.4123,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"ALBUQUERQUE NORTH"},{"zip":"87042","lat":34.8283,"lon":-106.6862,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.775,"orAlpha":0.961,"agi":69.8,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87045","lat":35.3971,"lon":-108.0155,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":29.9,"rss":"FARMINGTON"},{"zip":"87047","lat":35.2508,"lon":-106.2888,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":127.8,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87048","lat":35.2396,"lon":-106.6271,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":150.5,"rss":"ALBUQUERQUE NORTH"},{"zip":"87053","lat":35.5751,"lon":-106.8825,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":38.0,"rss":"ALBUQUERQUE NORTH"},{"zip":"87059","lat":34.9968,"lon":-106.3006,"n":4,"nPassed":3,"pPass":0.7949,"rawPass":0.75,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":0.866,"orAlpha":1.682,"agi":90.5,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87068","lat":34.8924,"lon":-106.6459,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":76.2,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87072","lat":35.6083,"lon":-106.3955,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"ALBUQUERQUE NORTH"},{"zip":"87102","lat":35.0824,"lon":-106.6468,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":45.5,"rss":"ALBUQUERQUE NORTH"},{"zip":"87104","lat":35.103,"lon":-106.6745,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.5691,"rawAlpha":0.6,"orPass":1.765,"orAlpha":1.082,"agi":87.4,"rss":"ALBUQUERQUE NORTH"},{"zip":"87105","lat":34.9943,"lon":-106.6848,"n":18,"nPassed":14,"pPass":0.79,"rawPass":0.7778,"pAlpha":0.5181,"rawAlpha":0.5,"orPass":0.84,"orAlpha":0.88,"agi":45.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87106","lat":35.0071,"lon":-106.6098,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.6165,"rawAlpha":0.75,"orPass":1.612,"orAlpha":1.317,"agi":71.3,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87107","lat":35.1378,"lon":-106.6425,"n":6,"nPassed":4,"pPass":0.7528,"rawPass":0.6667,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":0.68,"orAlpha":0.67,"agi":88.8,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87108","lat":35.0723,"lon":-106.5783,"n":6,"nPassed":5,"pPass":0.8242,"rawPass":0.8333,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":1.048,"orAlpha":0.794,"agi":50.2,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87109","lat":35.1517,"lon":-106.5749,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":1.765,"orAlpha":0.794,"agi":68.0,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87110","lat":35.1082,"lon":-106.5781,"n":14,"nPassed":12,"pPass":0.8427,"rawPass":0.8571,"pAlpha":0.6199,"rawAlpha":0.6667,"orPass":1.197,"orAlpha":1.336,"agi":68.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87111","lat":35.1408,"lon":-106.5146,"n":7,"nPassed":7,"pPass":0.9026,"rawPass":1.0,"pAlpha":0.6266,"rawAlpha":0.7143,"orPass":2.071,"orAlpha":1.374,"agi":104.4,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87112","lat":35.1006,"lon":-106.5163,"n":10,"nPassed":7,"pPass":0.7522,"rawPass":0.7,"pAlpha":0.6266,"rawAlpha":0.7143,"orPass":0.678,"orAlpha":1.374,"agi":62.1,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87114","lat":35.1975,"lon":-106.6818,"n":25,"nPassed":22,"pPass":0.8648,"rawPass":0.88,"pAlpha":0.5799,"rawAlpha":0.5909,"orPass":1.43,"orAlpha":1.131,"agi":82.3,"rss":"ALBUQUERQUE NORTH"},{"zip":"87116","lat":35.0489,"lon":-106.5611,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":61.3,"rss":"ALBUQUERQUE NORTH"},{"zip":"87120","lat":35.1405,"lon":-106.761,"n":17,"nPassed":13,"pPass":0.7815,"rawPass":0.7647,"pAlpha":0.6856,"rawAlpha":0.7692,"orPass":0.8,"orAlpha":1.786,"agi":77.0,"rss":"ALBUQUERQUE NORTH"},{"zip":"87121","lat":35.017,"lon":-106.8883,"n":33,"nPassed":25,"pPass":0.7692,"rawPass":0.7576,"pAlpha":0.3757,"rawAlpha":0.32,"orPass":0.745,"orAlpha":0.493,"agi":42.8,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87122","lat":35.1885,"lon":-106.4935,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":208.5,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87123","lat":35.0614,"lon":-106.4712,"n":13,"nPassed":13,"pPass":0.9304,"rawPass":1.0,"pAlpha":0.5428,"rawAlpha":0.5385,"orPass":2.988,"orAlpha":0.972,"agi":63.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87124","lat":35.2699,"lon":-106.7956,"n":19,"nPassed":18,"pPass":0.9088,"rawPass":0.9474,"pAlpha":0.7076,"rawAlpha":0.7778,"orPass":2.228,"orAlpha":1.982,"agi":69.9,"rss":"ALBUQUERQUE NORTH"},{"zip":"87144","lat":35.3302,"lon":-106.7101,"n":26,"nPassed":21,"pPass":0.81,"rawPass":0.8077,"pAlpha":0.6689,"rawAlpha":0.7143,"orPass":0.953,"orAlpha":1.654,"agi":75.4,"rss":"ALBUQUERQUE NORTH"},{"zip":"87301","lat":35.5216,"lon":-108.7653,"n":17,"nPassed":10,"pPass":0.6615,"rawPass":0.5882,"pAlpha":0.5777,"rawAlpha":0.6,"orPass":0.437,"orAlpha":1.12,"agi":54.6,"rss":"FARMINGTON"},{"zip":"87305","lat":35.4032,"lon":-108.7315,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.4398,"rawAlpha":0.0,"orPass":1.306,"orAlpha":0.643,"agi":null,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87310","lat":35.7467,"lon":-108.5959,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":null,"rss":"FARMINGTON"},{"zip":"87311","lat":35.6066,"lon":-108.5002,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.4398,"rawAlpha":0.0,"orPass":0.775,"orAlpha":0.643,"agi":null,"rss":"FARMINGTON"},{"zip":"87312","lat":35.4291,"lon":-108.3454,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":38.9,"rss":"FLAGSTAFF"},{"zip":"87313","lat":35.7982,"lon":-108.221,"n":10,"nPassed":9,"pPass":0.8633,"rawPass":0.9,"pAlpha":0.4352,"rawAlpha":0.3333,"orPass":1.411,"orAlpha":0.631,"agi":null,"rss":"FARMINGTON"},{"zip":"87316","lat":35.489,"lon":-108.5262,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"87317","lat":35.5802,"lon":-108.7524,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":32.9,"rss":"FARMINGTON"},{"zip":"87321","lat":35.0653,"lon":-108.4051,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":40.2,"rss":"FARMINGTON"},{"zip":"87322","lat":35.4853,"lon":-108.6625,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":null,"rss":"FARMINGTON"},{"zip":"87323","lat":35.4568,"lon":-108.1861,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":0.957,"orAlpha":0.67,"agi":35.0,"rss":"FARMINGTON"},{"zip":"87325","lat":35.9839,"lon":-108.5722,"n":6,"nPassed":4,"pPass":0.7528,"rawPass":0.6667,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":0.68,"orAlpha":0.67,"agi":null,"rss":"FARMINGTON"},{"zip":"87326","lat":35.2771,"lon":-108.8829,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":null,"rss":"FLAGSTAFF"},{"zip":"87327","lat":35.072,"lon":-108.7887,"n":4,"nPassed":4,"pPass":0.8782,"rawPass":1.0,"pAlpha":0.4499,"rawAlpha":0.25,"orPass":1.612,"orAlpha":0.67,"agi":null,"rss":"FARMINGTON"},{"zip":"87328","lat":36.0303,"lon":-109.0325,"n":3,"nPassed":0,"pPass":0.5944,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.328,"orAlpha":null,"agi":null,"rss":"FLAGSTAFF"},{"zip":"87357","lat":34.8294,"lon":-108.4093,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FARMINGTON"},{"zip":"87364","lat":36.1336,"lon":-108.712,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"FARMINGTON"},{"zip":"87365","lat":35.5359,"lon":-108.1379,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FLAGSTAFF"},{"zip":"87375","lat":35.6711,"lon":-108.7889,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.4398,"rawAlpha":0.0,"orPass":0.775,"orAlpha":0.643,"agi":null,"rss":"FARMINGTON"},{"zip":"87401","lat":36.7382,"lon":-108.1833,"n":35,"nPassed":31,"pPass":0.873,"rawPass":0.8857,"pAlpha":0.5487,"rawAlpha":0.5484,"orPass":1.536,"orAlpha":0.995,"agi":59.7,"rss":"FARMINGTON"},{"zip":"87402","lat":36.7966,"lon":-108.1517,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.4908,"rawAlpha":0.3333,"orPass":1.459,"orAlpha":0.789,"agi":93.4,"rss":"FARMINGTON"},{"zip":"87410","lat":36.8582,"lon":-107.8955,"n":6,"nPassed":6,"pPass":0.8956,"rawPass":1.0,"pAlpha":0.5285,"rawAlpha":0.5,"orPass":1.918,"orAlpha":0.918,"agi":59.1,"rss":"FARMINGTON"},{"zip":"87413","lat":36.4607,"lon":-107.9645,"n":11,"nPassed":8,"pPass":0.7652,"rawPass":0.7273,"pAlpha":0.4624,"rawAlpha":0.375,"orPass":0.728,"orAlpha":0.704,"agi":54.3,"rss":"FARMINGTON"},{"zip":"87416","lat":36.5851,"lon":-108.4516,"n":5,"nPassed":2,"pPass":0.6568,"rawPass":0.4,"pAlpha":0.4398,"rawAlpha":0.0,"orPass":0.428,"orAlpha":0.643,"agi":44.8,"rss":"FARMINGTON"},{"zip":"87417","lat":36.7501,"lon":-108.352,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.6165,"rawAlpha":0.75,"orPass":0.957,"orAlpha":1.317,"agi":50.5,"rss":"FARMINGTON"},{"zip":"87420","lat":36.8625,"lon":-108.9358,"n":13,"nPassed":9,"pPass":0.7399,"rawPass":0.6923,"pAlpha":0.3764,"rawAlpha":0.2222,"orPass":0.636,"orAlpha":0.494,"agi":40.6,"rss":"FARMINGTON"},{"zip":"87455","lat":36.2731,"lon":-108.7138,"n":3,"nPassed":1,"pPass":0.6853,"rawPass":0.3333,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.487,"orAlpha":1.227,"agi":null,"rss":"FARMINGTON"},{"zip":"87461","lat":36.4521,"lon":-108.9248,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"FARMINGTON"},{"zip":"87501","lat":35.7082,"lon":-105.851,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":132.4,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87505","lat":35.6198,"lon":-105.867,"n":6,"nPassed":6,"pPass":0.8956,"rawPass":1.0,"pAlpha":0.7427,"rawAlpha":1.0,"orPass":1.918,"orAlpha":2.364,"agi":102.6,"rss":"ALBUQUERQUE NORTH"},{"zip":"87506","lat":35.8246,"lon":-105.9553,"n":3,"nPassed":2,"pPass":0.7762,"rawPass":0.6667,"pAlpha":0.4398,"rawAlpha":0.0,"orPass":0.775,"orAlpha":0.643,"agi":170.0,"rss":"ALBUQUERQUE NORTH"},{"zip":"87507","lat":35.6218,"lon":-106.1086,"n":8,"nPassed":5,"pPass":0.7212,"rawPass":0.625,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":0.578,"orAlpha":0.794,"agi":58.2,"rss":"ALBUQUERQUE NORTH"},{"zip":"87508","lat":35.5206,"lon":-105.9458,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":99.6,"rss":"ALBUQUERQUE NORTH"},{"zip":"87520","lat":36.875,"lon":-106.6273,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":59.8,"rss":"FARMINGTON"},{"zip":"87529","lat":36.4459,"lon":-105.6661,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":67.4,"rss":"ALBUQUERQUE NORTH"},{"zip":"87532","lat":35.9898,"lon":-106.1256,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":0.685,"orAlpha":1.227,"agi":58.0,"rss":"ALBUQUERQUE NORTH"},{"zip":"87535","lat":35.5668,"lon":-105.7472,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":59.5,"rss":"ALBUQUERQUE NORTH"},{"zip":"87544","lat":35.767,"lon":-106.2951,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":1.459,"orAlpha":1.139,"agi":129.4,"rss":"ALBUQUERQUE NORTH"},{"zip":"87547","lat":35.811,"lon":-106.2077,"n":3,"nPassed":3,"pPass":0.8672,"rawPass":1.0,"pAlpha":0.6726,"rawAlpha":1.0,"orPass":1.459,"orAlpha":1.682,"agi":null,"rss":"ALBUQUERQUE NORTH"},{"zip":"87549","lat":36.2933,"lon":-105.9646,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":74.2,"rss":"ALBUQUERQUE NORTH"},{"zip":"87552","lat":35.6701,"lon":-105.6139,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":52.1,"rss":"ALBUQUERQUE NORTH"},{"zip":"87557","lat":36.2956,"lon":-105.6351,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":58.8,"rss":"ALBUQUERQUE NORTH"},{"zip":"87567","lat":35.994,"lon":-106.0187,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":50.3,"rss":"ALBUQUERQUE NORTH"},{"zip":"87571","lat":36.3516,"lon":-105.4365,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.6165,"rawAlpha":0.75,"orPass":0.957,"orAlpha":1.317,"agi":59.9,"rss":"ALBUQUERQUE NORTH"},{"zip":"87582","lat":36.1791,"lon":-105.9945,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"ALBUQUERQUE NORTH"},{"zip":"87701","lat":35.5421,"lon":-104.9335,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":43.2,"rss":"ALBUQUERQUE NORTH"},{"zip":"87710","lat":36.3824,"lon":-105.2302,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":null,"rss":"ALBUQUERQUE NORTH"},{"zip":"87714","lat":36.4643,"lon":-105.0589,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":53.9,"rss":"ALBUQUERQUE NORTH"},{"zip":"87722","lat":36.1458,"lon":-105.2756,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":52.8,"rss":"ALBUQUERQUE NORTH"},{"zip":"87734","lat":36.1691,"lon":-105.0911,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":60.7,"rss":"ALBUQUERQUE NORTH"},{"zip":"87740","lat":36.7671,"lon":-104.3639,"n":2,"nPassed":0,"pPass":0.6539,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.422,"orAlpha":null,"agi":49.5,"rss":"ALBUQUERQUE NORTH"},{"zip":"87747","lat":36.3545,"lon":-104.4364,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":47.3,"rss":"ALBUQUERQUE NORTH"},{"zip":"87801","lat":33.9326,"lon":-107.0738,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.646,"rawAlpha":0.8,"orPass":1.765,"orAlpha":1.494,"agi":51.2,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87824","lat":33.8286,"lon":-108.9817,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"MESA"},{"zip":"87825","lat":33.9492,"lon":-107.6555,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":41.6,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87828","lat":34.2058,"lon":-106.9206,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":37.3,"rss":"ALBUQUERQUE SOUTH"},{"zip":"87901","lat":33.1609,"lon":-107.0168,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":39.0,"rss":"MESA"},{"zip":"88001","lat":32.2902,"lon":-106.7531,"n":15,"nPassed":13,"pPass":0.8495,"rawPass":0.8667,"pAlpha":0.5904,"rawAlpha":0.6154,"orPass":1.262,"orAlpha":1.18,"agi":36.9,"rss":"MESA"},{"zip":"88005","lat":32.2231,"lon":-106.9876,"n":8,"nPassed":7,"pPass":0.8462,"rawPass":0.875,"pAlpha":0.6266,"rawAlpha":0.7143,"orPass":1.229,"orAlpha":1.374,"agi":60.7,"rss":"MESA"},{"zip":"88007","lat":32.3891,"lon":-106.9751,"n":10,"nPassed":8,"pPass":0.8077,"rawPass":0.8,"pAlpha":0.4624,"rawAlpha":0.375,"orPass":0.939,"orAlpha":0.704,"agi":68.4,"rss":"MESA"},{"zip":"88008","lat":31.8187,"lon":-106.7573,"n":6,"nPassed":6,"pPass":0.8956,"rawPass":1.0,"pAlpha":0.5999,"rawAlpha":0.6667,"orPass":1.918,"orAlpha":1.228,"agi":60.1,"rss":"MESA"},{"zip":"88011","lat":32.3772,"lon":-106.5763,"n":15,"nPassed":14,"pPass":0.893,"rawPass":0.9333,"pAlpha":0.5636,"rawAlpha":0.5714,"orPass":1.865,"orAlpha":1.057,"agi":86.2,"rss":"MESA"},{"zip":"88012","lat":32.5889,"lon":-106.7713,"n":13,"nPassed":10,"pPass":0.7876,"rawPass":0.7692,"pAlpha":0.4666,"rawAlpha":0.4,"orPass":0.828,"orAlpha":0.716,"agi":55.4,"rss":"MESA"},{"zip":"88021","lat":31.9879,"lon":-106.8037,"n":7,"nPassed":5,"pPass":0.7692,"rawPass":0.7143,"pAlpha":0.4922,"rawAlpha":0.4,"orPass":0.745,"orAlpha":0.794,"agi":41.3,"rss":"MESA"},{"zip":"88027","lat":32.0362,"lon":-106.6814,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":null,"rss":"MESA"},{"zip":"88029","lat":31.8449,"lon":-107.6947,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"MESA"},{"zip":"88030","lat":32.1735,"lon":-107.7274,"n":7,"nPassed":5,"pPass":0.7692,"rawPass":0.7143,"pAlpha":0.4153,"rawAlpha":0.2,"orPass":0.745,"orAlpha":0.582,"agi":41.2,"rss":"MESA"},{"zip":"88044","lat":31.9808,"lon":-107.1007,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.6398,"rawAlpha":1.0,"orPass":1.306,"orAlpha":1.455,"agi":56.5,"rss":"MESA"},{"zip":"88048","lat":32.1447,"lon":-106.655,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":34.4,"rss":"MESA"},{"zip":"88061","lat":32.6285,"lon":-108.4064,"n":5,"nPassed":5,"pPass":0.8876,"rawPass":1.0,"pAlpha":0.4153,"rawAlpha":0.2,"orPass":1.765,"orAlpha":0.582,"agi":55.5,"rss":"MESA"},{"zip":"88063","lat":31.7991,"lon":-106.5505,"n":2,"nPassed":1,"pPass":0.7539,"rawPass":0.5,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":0.685,"orAlpha":0.783,"agi":31.9,"rss":"MESA"},{"zip":"88081","lat":32.2194,"lon":-106.2937,"n":9,"nPassed":8,"pPass":0.8552,"rawPass":0.8889,"pAlpha":0.4624,"rawAlpha":0.375,"orPass":1.32,"orAlpha":0.704,"agi":33.5,"rss":"EL PASO WEST"},{"zip":"88101","lat":34.4995,"lon":-103.2577,"n":14,"nPassed":12,"pPass":0.8427,"rawPass":0.8571,"pAlpha":0.5699,"rawAlpha":0.5833,"orPass":1.197,"orAlpha":1.085,"agi":54.4,"rss":"ROSWELL"},{"zip":"88130","lat":34.1315,"lon":-103.3267,"n":8,"nPassed":7,"pPass":0.8462,"rawPass":0.875,"pAlpha":0.4932,"rawAlpha":0.4286,"orPass":1.229,"orAlpha":0.797,"agi":49.2,"rss":"ROSWELL"},{"zip":"88135","lat":34.56,"lon":-103.0777,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":55.8,"rss":"ROSWELL"},{"zip":"88201","lat":33.6688,"lon":-104.4967,"n":17,"nPassed":13,"pPass":0.7815,"rawPass":0.7647,"pAlpha":0.638,"rawAlpha":0.6923,"orPass":0.8,"orAlpha":1.443,"agi":74.1,"rss":"ROSWELL"},{"zip":"88203","lat":33.2907,"lon":-104.0675,"n":20,"nPassed":15,"pPass":0.7692,"rawPass":0.75,"pAlpha":0.3217,"rawAlpha":0.2,"orPass":0.745,"orAlpha":0.388,"agi":43.0,"rss":"ROSWELL"},{"zip":"88210","lat":32.7746,"lon":-104.2242,"n":5,"nPassed":4,"pPass":0.8107,"rawPass":0.8,"pAlpha":0.5332,"rawAlpha":0.5,"orPass":0.957,"orAlpha":0.935,"agi":82.5,"rss":"ROSWELL"},{"zip":"88220","lat":32.3149,"lon":-104.42,"n":13,"nPassed":13,"pPass":0.9304,"rawPass":1.0,"pAlpha":0.4475,"rawAlpha":0.3846,"orPass":2.988,"orAlpha":0.663,"agi":78.2,"rss":"ROSWELL"},{"zip":"88230","lat":33.2192,"lon":-104.3976,"n":1,"nPassed":0,"pPass":0.7265,"rawPass":0.0,"pAlpha":null,"rawAlpha":null,"orPass":0.594,"orAlpha":null,"agi":47.3,"rss":"ROSWELL"},{"zip":"88231","lat":32.4243,"lon":-103.2613,"n":2,"nPassed":2,"pPass":0.8539,"rawPass":1.0,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":1.306,"orAlpha":0.961,"agi":null,"rss":"ROSWELL"},{"zip":"88240","lat":32.6747,"lon":-103.4468,"n":26,"nPassed":23,"pPass":0.8688,"rawPass":0.8846,"pAlpha":0.4967,"rawAlpha":0.4783,"orPass":1.48,"orAlpha":0.808,"agi":61.9,"rss":"ROSWELL"},{"zip":"88250","lat":32.702,"lon":-104.9558,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":null,"rss":"CLOVIS"},{"zip":"88310","lat":32.7352,"lon":-106.0404,"n":8,"nPassed":6,"pPass":0.7837,"rawPass":0.75,"pAlpha":0.5285,"rawAlpha":0.5,"orPass":0.81,"orAlpha":0.918,"agi":54.0,"rss":"MESA"},{"zip":"88312","lat":33.4319,"lon":-105.644,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.4887,"rawAlpha":0.0,"orPass":1.153,"orAlpha":0.783,"agi":109.8,"rss":"MESA"},{"zip":"88325","lat":32.8556,"lon":-105.8533,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":null,"rss":"ROSWELL"},{"zip":"88340","lat":33.1761,"lon":-105.5832,"n":4,"nPassed":2,"pPass":0.7116,"rawPass":0.5,"pAlpha":0.5398,"rawAlpha":0.5,"orPass":0.551,"orAlpha":0.961,"agi":34.0,"rss":"MESA"},{"zip":"88341","lat":33.4735,"lon":-105.8456,"n":1,"nPassed":1,"pPass":0.8376,"rawPass":1.0,"pAlpha":0.5998,"rawAlpha":1.0,"orPass":1.153,"orAlpha":1.227,"agi":56.8,"rss":"ROSWELL"},{"zip":"88352","lat":33.1659,"lon":-105.9939,"n":4,"nPassed":3,"pPass":0.7949,"rawPass":0.75,"pAlpha":0.5817,"rawAlpha":0.6667,"orPass":0.866,"orAlpha":1.139,"agi":46.5,"rss":"MESA"}],"priorPass":0.8173,"priorAlpha":0.5498,"k":8.0,"totalApplicants":1511,"totalPassed":1235,"totalAlpha":679,"nCore":232,"nOutside":33,"applicantsOutside":43};
+
+/* ---------- projection ----------
+   Fixed geographic frame covering the recruiting area rather than a fit to the
+   data extent, so the state outlines land in a stable place and nothing is
+   clipped at an arbitrary edge. */
+const FRAME = {west: -115.2, east: -101.4, south: 30.5, north: 37.7};
+const kx = Math.cos(((FRAME.south + FRAME.north) / 2) * Math.PI / 180);
+const spanX = (FRAME.east - FRAME.west) * kx, spanY = FRAME.north - FRAME.south;
+const VB = {w: 640, h: Math.round(640 * spanY / spanX)};
+const px = lon => (lon - FRAME.west) * kx / spanX * VB.w;
+const py = lat => (FRAME.north - lat) / spanY * VB.h;
+
+/* ---------- diverging ramp: ocean -> neutral -> fringe gold ---------- */
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const hex2rgb = h => { h = h.replace('#', ''); return [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); };
+const mix = (a, b, t) => { const A = hex2rgb(a), B = hex2rgb(b);
+  return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
+function rampColor(or) {
+  const lo = Math.log(0.4), hi = Math.log(2.5);
+  const t = (Math.log(Math.max(0.4, Math.min(2.5, or))) - lo) / (hi - lo);
+  return t < 0.5 ? mix(css('--low'), css('--mid'), t * 2)
+                 : mix(css('--mid'), css('--high'), (t - 0.5) * 2);
+}
+const radius = n => 3.1 + Math.sqrt(n) * 2.05;
+
+/* ---------- static geography (straight survey borders only) ---------- */
+const STATES = [{"ab":"NM","name":"New Mexico","rings":[[[-103.06,32.33],[-103.04,36.5],[-103.0,36.5],[-103.0,37.0],[-109.05,37.0],[-109.05,31.33],[-108.21,31.33],[-108.21,31.78],[-106.53,31.78],[-106.64,31.87],[-106.62,32.0],[-103.06,32.0],[-103.06,32.33]]],"lab":[34.9,-106.2]},{"ab":"AZ","name":"Arizona","rings":[[[-110.75,37.0],[-114.05,37.0],[-114.04,36.19],[-114.12,36.11],[-114.14,36.04],[-114.24,36.02],[-114.41,36.15],[-114.45,36.13],[-114.63,36.14],[-114.75,36.09],[-114.72,36.03],[-114.74,35.98],[-114.66,35.87],[-114.71,35.85],[-114.71,35.81],[-114.69,35.65],[-114.65,35.61],[-114.68,35.5],[-114.6,35.36],[-114.57,35.18],[-114.58,35.13],[-114.65,35.1],[-114.6,35.07],[-114.64,35.03],[-114.64,34.88],[-114.47,34.71],[-114.44,34.6],[-114.38,34.53],[-114.39,34.46],[-114.18,34.35],[-114.13,34.26],[-114.42,34.11],[-114.44,34.02],[-114.54,33.93],[-114.51,33.9],[-114.53,33.81],[-114.49,33.71],[-114.53,33.68],[-114.52,33.55],[-114.64,33.42],[-114.73,33.41],[-114.7,33.35],[-114.73,33.3],[-114.67,33.26],[-114.71,33.09],[-114.66,33.03],[-114.51,33.02],[-114.47,32.97],[-114.47,32.85],[-114.54,32.75],[-114.7,32.74],[-114.81,32.62],[-114.81,32.49],[-111.07,31.33],[-109.05,31.33],[-109.05,37.0],[-110.75,37.0]]],"lab":[34.4,-111.9]},{"ab":"KS","name":"Kansas","rings":[[[-94.62,37.76],[-94.59,39.15],[-94.68,39.18],[-94.74,39.17],[-94.83,39.22],[-94.83,39.26],[-94.91,39.31],[-94.89,39.39],[-94.94,39.39],[-95.11,39.54],[-95.1,39.58],[-95.05,39.59],[-95.03,39.67],[-94.97,39.69],[-94.96,39.74],[-94.86,39.74],[-94.87,39.77],[-94.93,39.77],[-94.88,39.82],[-94.94,39.85],[-94.95,39.9],[-95.09,39.86],[-95.2,39.9],[-95.21,39.94],[-95.31,40.0],[-102.05,40.0],[-102.04,36.99],[-94.62,37.0],[-94.62,37.76]]],"lab":[37.6,-99.5]},{"ab":"CO","name":"Colorado","rings":[[[-105.16,37.0],[-102.04,36.99],[-102.05,41.0],[-109.05,41.0],[-109.05,37.0],[-105.16,37.0]]],"lab":[37.7,-105.8]},{"ab":"NV","name":"Nevada","rings":[[[-119.32,41.99],[-120.0,41.99],[-120.0,39.0],[-117.5,37.22],[-114.63,35.0],[-114.6,35.07],[-114.65,35.1],[-114.58,35.13],[-114.57,35.18],[-114.6,35.36],[-114.68,35.5],[-114.65,35.61],[-114.69,35.65],[-114.71,35.81],[-114.71,35.85],[-114.66,35.87],[-114.74,35.98],[-114.72,36.03],[-114.75,36.09],[-114.57,36.15],[-114.5,36.13],[-114.37,36.14],[-114.24,36.02],[-114.15,36.02],[-114.12,36.11],[-114.04,36.19],[-114.04,41.99],[-119.32,41.99]]],"lab":[37.6,-116.5]},{"ab":"UT","name":"Utah","rings":[[[-111.51,42.0],[-114.04,41.99],[-114.05,37.0],[-109.05,37.0],[-109.05,41.0],[-111.05,41.0],[-111.05,42.0],[-111.51,42.0]]],"lab":[37.7,-111.6]},{"ab":"OK","name":"Oklahoma","rings":[[[-95.79,37.0],[-103.0,37.0],[-103.0,36.5],[-100.0,36.5],[-100.0,34.56],[-99.92,34.57],[-99.69,34.38],[-99.6,34.37],[-99.57,34.42],[-99.41,34.37],[-99.37,34.46],[-99.32,34.41],[-99.26,34.4],[-99.27,34.38],[-99.21,34.34],[-99.19,34.21],[-99.04,34.2],[-98.99,34.22],[-98.76,34.12],[-98.6,34.16],[-98.49,34.06],[-98.41,34.09],[-98.37,34.16],[-98.17,34.11],[-98.11,34.15],[-98.09,34.13],[-98.12,34.07],[-98.09,34.01],[-97.95,33.99],[-97.98,33.9],[-97.97,33.88],[-97.83,33.86],[-97.67,33.99],[-97.59,33.95],[-97.58,33.9],[-97.46,33.91],[-97.46,33.84],[-97.43,33.82],[-97.37,33.82],[-97.33,33.88],[-97.33,33.86],[-97.31,33.89],[-97.26,33.86],[-97.21,33.92],[-97.17,33.85],[-97.2,33.82],[-97.19,33.76],[-97.13,33.72],[-97.09,33.74],[-97.09,33.8],[-97.05,33.82],[-97.09,33.85],[-97.02,33.85],[-96.98,33.89],[-96.98,33.96],[-96.97,33.94],[-96.92,33.96],[-96.88,33.86],[-96.79,33.87],[-96.76,33.82],[-96.7,33.84],[-96.67,33.92],[-96.59,33.89],[-96.63,33.85],[-96.53,33.82],[-96.5,33.77],[-96.42,33.78],[-96.35,33.69],[-96.29,33.77],[-96.19,33.76],[-96.15,33.84],[-96.02,33.84],[-96.0,33.87],[-95.95,33.86],[-95.93,33.88],[-95.83,33.83],[-95.82,33.86],[-95.76,33.85],[-95.75,33.89],[-95.63,33.9],[-95.59,33.94],[-95.55,33.93],[-95.54,33.88],[-95.29,33.87],[-95.22,33.96],[-95.12,33.93],[-95.12,33.9],[-95.08,33.92],[-95.09,33.88],[-95.07,33.92],[-95.05,33.86],[-94.97,33.86],[-94.87,33.74],[-94.82,33.73],[-94.82,33.77],[-94.8,33.73],[-94.76,33.76],[-94.79,33.74],[-94.73,33.73],[-94.74,33.69],[-94.73,33.72],[-94.7,33.7],[-94.72,33.69],[-94.64,33.7],[-94.67,33.66],[-94.59,33.69],[-94.56,33.67],[-94.59,33.65],[-94.54,33.65],[-94.57,33.63],[-94.49,33.63],[-94.43,35.39],[-94.62,36.5],[-94.62,37.0],[-95.79,37.0]]],"lab":[35.6,-100.4]},{"ab":"TX","name":"Texas","rings":[[[-98.42,34.08],[-98.49,34.06],[-98.6,34.16],[-98.76,34.12],[-98.99,34.22],[-99.04,34.2],[-99.19,34.21],[-99.21,34.34],[-99.36,34.46],[-99.4,34.44],[-99.41,34.37],[-99.57,34.42],[-99.6,34.37],[-99.69,34.38],[-99.92,34.57],[-100.0,34.56],[-100.0,36.5],[-103.04,36.5],[-103.06,32.0],[-106.62,32.0],[-106.64,31.98],[-106.61,31.92],[-106.65,31.9],[-106.6,31.83],[-106.49,31.75],[-106.45,31.76],[-106.38,31.73],[-106.21,31.47],[-105.95,31.36],[-105.77,31.17],[-105.6,31.08],[-105.56,30.99],[-105.4,30.89],[-105.4,30.85],[-105.26,30.79],[-105.22,30.81],[-105.06,30.69],[-105.01,30.69],[-104.97,30.61],[-104.92,30.6],[-104.87,30.49],[-104.86,30.39],[-104.71,30.23],[-104.68,29.93],[-104.57,29.77],[-104.51,29.63],[-104.34,29.52],[-104.21,29.48],[-104.17,29.39],[-104.04,29.32],[-103.78,29.27],[-103.78,29.22],[-103.76,29.23],[-103.72,29.18],[-103.55,29.16],[-103.47,29.07],[-103.39,29.02],[-103.33,29.04],[-103.29,28.98],[-103.12,28.98],[-103.1,29.06],[-103.03,29.1],[-103.0,29.18],[-102.95,29.17],[-102.87,29.22],[-102.91,29.26],[-102.88,29.35],[-102.81,29.4],[-102.83,29.41],[-102.81,29.52],[-102.67,29.74],[-102.63,29.73],[-102.57,29.77],[-102.55,29.74],[-102.49,29.79],[-102.39,29.76],[-102.36,29.85],[-102.32,29.88],[-102.07,29.79],[-101.98,29.82],[-101.93,29.78],[-101.85,29.81],[-101.82,29.79],[-101.82,29.81],[-101.81,29.78],[-101.64,29.75],[-101.58,29.77],[-101.54,29.81],[-101.54,29.76],[-101.46,29.79],[-101.45,29.75],[-101.4,29.77],[-101.42,29.75],[-101.36,29.65],[-101.3,29.65],[-101.31,29.58],[-101.25,29.62],[-101.25,29.52],[-101.06,29.46],[-101.01,29.37],[-100.81,29.26],[-100.77,29.17],[-100.68,29.1],[-100.64,28.91],[-100.54,28.81],[-100.5,28.66],[-100.4,28.59],[-100.39,28.51],[-100.33,28.5],[-100.37,28.48],[-100.29,28.28],[-100.22,28.23],[-100.21,28.19],[-100.08,28.14],[-99.99,27.99],[-99.93,27.98],[-99.88,27.8],[-99.81,27.77],[-99.71,27.66],[-99.6,27.64],[-99.58,27.6],[-99.55,27.61],[-99.51,27.57],[-99.53,27.5],[-99.48,27.48],[-99.5,27.34],[-99.54,27.32],[-99.44,27.25],[-99.45,27.02],[-99.27,26.84],[-99.21,26.72],[-99.17,26.54],[-99.1,26.5],[-99.11,26.43],[-99.09,26.4],[-98.97,26.4],[-98.94,26.37],[-98.93,26.39],[-98.9,26.35],[-98.81,26.37],[-98.67,26.24],[-98.62,26.26],[-98.48,26.2],[-98.44,26.22],[-98.39,26.16],[-98.34,26.17],[-98.31,26.1],[-98.27,26.12],[-98.29,26.1],[-98.19,26.05],[-98.08,26.07],[-98.08,26.04],[-98.03,26.07],[-97.86,26.07],[-97.74,26.02],[-97.66,26.04],[-97.52,25.89],[-97.37,25.84],[-97.37,25.91],[-97.28,25.94],[-97.29,25.96],[-97.09,25.96],[-97.13,26.25],[-97.3,26.83],[-97.32,27.11],[-97.2,27.5],[-96.96,27.88],[-96.75,28.08],[-96.38,28.29],[-96.24,28.42],[-95.33,28.83],[-95.11,29.01],[-95.09,29.07],[-94.71,29.28],[-94.65,29.29],[-94.62,29.34],[-94.65,29.38],[-94.63,29.4],[-94.03,29.63],[-93.81,29.6],[-93.84,29.69],[-93.93,29.81],[-93.7,30.06],[-93.73,30.09],[-93.69,30.14],[-93.72,30.21],[-93.7,30.29],[-93.77,30.33],[-93.76,30.39],[-93.7,30.44],[-93.71,30.52],[-93.74,30.54],[-93.68,30.59],[-93.68,30.64],[-93.63,30.68],[-93.61,30.76],[-93.55,30.82],[-93.57,30.88],[-93.53,30.94],[-93.58,31.0],[-93.51,31.03],[-93.56,31.09],[-93.53,31.18],[-93.59,31.17],[-93.62,31.27],[-93.69,31.31],[-93.64,31.37],[-93.67,31.37],[-93.7,31.46],[-93.75,31.47],[-93.71,31.51],[-93.79,31.53],[-93.83,31.59],[-93.79,31.7],[-93.84,31.75],[-93.82,31.78],[-93.87,31.81],[-93.9,31.9],[-93.93,31.89],[-94.04,31.99],[-94.04,33.55],[-94.07,33.55],[-94.07,33.58],[-94.13,33.55],[-94.18,33.59],[-94.22,33.58],[-94.2,33.56],[-94.25,33.56],[-94.24,33.59],[-94.28,33.56],[-94.29,33.58],[-94.31,33.55],[-94.39,33.55],[-94.38,33.58],[-94.41,33.57],[-94.47,33.6],[-94.45,33.64],[-94.53,33.62],[-94.52,33.64],[-94.57,33.63],[-94.55,33.66],[-94.59,33.65],[-94.56,33.67],[-94.59,33.69],[-94.65,33.66],[-94.64,33.7],[-94.72,33.69],[-94.7,33.7],[-94.73,33.72],[-94.74,33.69],[-94.73,33.73],[-94.79,33.74],[-94.76,33.76],[-94.8,33.73],[-94.82,33.77],[-94.82,33.73],[-94.86,33.74],[-94.97,33.86],[-95.05,33.86],[-95.07,33.92],[-95.09,33.88],[-95.08,33.92],[-95.12,33.9],[-95.12,33.93],[-95.22,33.96],[-95.29,33.87],[-95.54,33.88],[-95.55,33.93],[-95.59,33.94],[-95.63,33.9],[-95.75,33.89],[-95.76,33.85],[-95.82,33.86],[-95.83,33.83],[-95.93,33.88],[-95.95,33.86],[-96.0,33.87],[-96.02,33.84],[-96.15,33.84],[-96.19,33.76],[-96.29,33.77],[-96.35,33.69],[-96.42,33.78],[-96.5,33.77],[-96.53,33.82],[-96.63,33.84],[-96.59,33.89],[-96.66,33.92],[-96.7,33.84],[-96.76,33.82],[-96.79,33.87],[-96.87,33.86],[-96.92,33.96],[-96.99,33.95],[-96.98,33.89],[-97.04,33.84],[-97.09,33.85],[-97.05,33.82],[-97.09,33.8],[-97.09,33.74],[-97.13,33.72],[-97.19,33.76],[-97.2,33.82],[-97.17,33.85],[-97.21,33.92],[-97.26,33.86],[-97.31,33.89],[-97.33,33.86],[-97.33,33.88],[-97.37,33.82],[-97.43,33.82],[-97.46,33.84],[-97.46,33.91],[-97.58,33.9],[-97.59,33.95],[-97.67,33.99],[-97.87,33.85],[-97.98,33.9],[-97.95,33.99],[-98.09,34.01],[-98.12,34.07],[-98.09,34.12],[-98.11,34.15],[-98.17,34.11],[-98.37,34.16],[-98.42,34.08]]],"lab":[33.4,-101.9]}];
+const CITIES = [
+  {n:'Albuquerque', lat:35.08, lon:-106.65}, {n:'Santa Fe', lat:35.69, lon:-105.94},
+  {n:'Farmington',  lat:36.73, lon:-108.19}, {n:'El Paso',  lat:31.77, lon:-106.44},
+  {n:'Flagstaff',   lat:35.20, lon:-111.65}, {n:'Mesa',     lat:33.42, lon:-111.83},
+  {n:'Roswell',     lat:33.39, lon:-104.52}, {n:'Hobbs',    lat:32.70, lon:-103.14}
+];
+
+/* ---------- state ---------- */
+let mode = 'pass', selected = null;
+// browsers restore a range input's position across reloads, so take the
+// initial threshold from the control itself rather than a hardcoded default
+let minN = +document.getElementById('minN').value;
+const val   = d => mode === 'pass' ? d.orPass  : d.orAlpha;
+const prob  = d => mode === 'pass' ? d.pPass   : d.pAlpha;
+const raw   = d => mode === 'pass' ? d.rawPass : d.rawAlpha;
+const denom = d => mode === 'pass' ? d.n       : d.nPassed;
+const visible = () => DATA.zips.filter(d => val(d) != null && denom(d) >= minN);
+
+const SVG = 'http://www.w3.org/2000/svg';
+const el = (t, a) => { const e = document.createElementNS(SVG, t);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+const pct = x => (x * 100).toFixed(1) + '%';
+
+function drawMap() {
+  const svg = document.getElementById('map');
+  svg.setAttribute('viewBox', `0 0 ${VB.w} ${VB.h}`);
+  svg.textContent = '';
+  svg.appendChild(el('defs', {})).appendChild(el('clipPath', {id: 'frame'}))
+     .appendChild(el('rect', {x: 0, y: 0, width: VB.w, height: VB.h}));
+  const g = el('g', {'clip-path': 'url(#frame)'});
+  svg.appendChild(g);
+  for (const st of STATES) {
+    const d = st.rings.map(r =>
+      'M' + r.map(([lon, lat]) => `${px(lon).toFixed(1)},${py(lat).toFixed(1)}`).join('L') + 'Z').join('');
+    g.appendChild(el('path', {class: 'state', d}));
+  }
+  for (const st of STATES) {
+    if (!st.lab) continue;
+    const x = px(st.lab[1]), y = py(st.lab[0]);
+    if (x < 4 || x > VB.w - 4 || y < 8 || y > VB.h - 4) continue;
+    const t = el('text', {class:'statelabel', x, y, 'text-anchor':'middle'});
+    t.textContent = st.ab; g.appendChild(t);
+  }
+  const rows = visible().slice().sort((a, b) => b.n - a.n);
+  for (const d of rows) {
+    const c = el('circle', {
+      class: 'zip' + (selected === d.zip ? ' sel' : ''),
+      cx: px(d.lon).toFixed(1), cy: py(d.lat).toFixed(1), r: radius(denom(d)).toFixed(1),
+      fill: rampColor(val(d)), 'fill-opacity': .85, tabindex: '0', role: 'button',
+      'data-zip': d.zip,
+      'aria-label': `ZIP ${d.zip}, ${denom(d)} applicants, ${val(d).toFixed(2)} times baseline odds`
+    });
+    const show = () => { selected = d.zip; detail(d); paintSel(); };
+    c.addEventListener('mouseenter', show);
+    c.addEventListener('focus', show);
+    c.addEventListener('click', show);
+    g.appendChild(c);
+  }
+  for (const c of CITIES) {
+    g.appendChild(el('circle', {class:'citydot', cx:px(c.lon), cy:py(c.lat), r:1.9}));
+    const t = el('text', {class:'cityname', x:px(c.lon) + 5.5, y:py(c.lat) + 3.4});
+    t.textContent = c.n; g.appendChild(t);
+  }
+}
+const paintSel = () => document.querySelectorAll('circle.zip')
+  .forEach(c => c.classList.toggle('sel', c.dataset.zip === selected));
+
+function detail(d) {
+  const box = document.getElementById('detail');
+  if (!d) { box.innerHTML = '<span class="empty">Hover or tap a ZIP.</span>'; return; }
+  const or = val(d);
+  box.innerHTML = `
+    <div class="z">${d.zip}</div>
+    <div style="color:var(--ink-faint);font-size:.74rem;margin-top:-5px">${d.rss}</div>
+    <span class="chip" style="background:${rampColor(or)};color:#fff;align-self:flex-start">${or.toFixed(2)}&times; baseline</span>
+    <dl>
+      <dt>Applicants</dt><dd>${denom(d)}</dd>
+      <dt>Raw rate</dt><dd>${raw(d) == null ? '&mdash;' : pct(raw(d))}</dd>
+      <dt>Adjusted</dt><dd>${pct(prob(d))}</dd>
+      <dt>ZIP income</dt><dd>${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</dd>
+    </dl>`;
+}
+
+function drawTable() {
+  const rows = visible().slice().sort((a, b) => val(b) - val(a));
+  const pick = rows.length > 16 ? [...rows.slice(0, 8), null, ...rows.slice(-8)] : rows;
+  const tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  for (const d of pick) {
+    const tr = document.createElement('tr');
+    if (d === null) {
+      tr.innerHTML = `<td colspan="7" style="text-align:center;color:var(--ink-faint);font-size:.74rem">
+        ${rows.length - 16} more ZIPs between</td>`;
+      tr.style.cursor = 'default';
+    } else {
+      tr.innerHTML = `<td class="v">${d.zip}</td>
+        <td style="text-align:left;color:var(--ink-soft)">${d.rss}</td>
+        <td class="v">${denom(d)}</td>
+        <td class="v">${raw(d) == null ? '&mdash;' : pct(raw(d))}</td>
+        <td class="v">${pct(prob(d))}</td>
+        <td><span class="chip" style="background:${rampColor(val(d))};color:#fff">${val(d).toFixed(2)}&times;</span></td>
+        <td class="v">${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</td>`;
+      tr.addEventListener('click', () => { selected = d.zip; detail(d); paintSel(); });
+    }
+    tb.appendChild(tr);
+  }
+}
+
+function drawStats() {
+  const s = [
+    ['Applicants', DATA.totalApplicants.toLocaleString()],
+    ['Passed (31+)', `${DATA.totalPassed.toLocaleString()} · ${pct(DATA.priorPass)}`],
+    ['Alpha of those', `${DATA.totalAlpha.toLocaleString()} · ${pct(DATA.priorAlpha)}`],
+    ['ZIPs shown', String(visible().length)]
+  ];
+  document.getElementById('stats').innerHTML =
+    s.map(([k, v]) => `<div class="stat"><small>${k}</small><b>${v}</b></div>`).join('');
+}
+
+function drawLegend() {
+  const stops = [];
+  for (let i = 0; i <= 10; i++)
+    stops.push(rampColor(Math.exp(Math.log(0.4) + (Math.log(2.5) - Math.log(0.4)) * i / 10)));
+  document.getElementById('ramp').style.background = `linear-gradient(90deg, ${stops.join(',')})`;
+  document.getElementById('sizes').innerHTML = [1, 10, 40]
+    .map(n => `<div><i style="width:${radius(n)*2}px;height:${radius(n)*2}px"></i>${n}</div>`).join('');
+}
+
+function render() {
+  document.getElementById('mapTitle').textContent =
+    mode === 'pass' ? 'Odds of passing' : 'Odds of alpha';
+  document.getElementById('tableTitle').textContent =
+    mode === 'pass' ? 'Strongest and weakest ZIPs for passing' : 'Strongest and weakest ZIPs for alpha';
+  document.getElementById('btnPass').setAttribute('aria-pressed', mode === 'pass');
+  document.getElementById('btnAlpha').setAttribute('aria-pressed', mode === 'alpha');
+  drawLegend(); drawStats(); drawMap(); drawTable();
+  const cur = DATA.zips.find(d => d.zip === selected);
+  detail(cur && val(cur) != null && denom(cur) >= minN ? cur : null);
+}
+
+document.getElementById('btnPass').onclick  = () => { mode = 'pass';  render(); };
+document.getElementById('btnAlpha').onclick = () => { mode = 'alpha'; render(); };
+const slider = document.getElementById('minN');
+document.getElementById('minNOut').textContent = minN;
+slider.addEventListener('input', () => {
+  minN = +slider.value;
+  document.getElementById('minNOut').textContent = minN;
+  render();
+});
+document.getElementById('coverage').textContent =
+  `${DATA.nCore} ZIPs in the recruiting area are mapped; ${DATA.nOutside} ZIPs holding ` +
+  `${DATA.applicantsOutside} applicants fall outside the region and are not shown.`;
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+new MutationObserver(render).observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
+render();
+</script>
