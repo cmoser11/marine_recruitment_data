@@ -279,35 +279,61 @@
     <h2>What the columns mean</h2>
     <dl class="defs">
       <dt>Applicants</dt>
-      <dd>People, not rows &mdash; the export repeats someone once per lead source, so those are
-        collapsed first. In the alpha view, only those who passed.</dd>
+      <dd>People, not rows. The raw export repeats an applicant once for every lead source that touched
+        them &mdash; up to six times &mdash; so those rows are collapsed before anything is counted. In
+        the alpha view this counts only applicants who passed, since alpha is measured among them.</dd>
 
       <dt>Passing</dt>
-      <dd>AFQT 31 or higher.</dd>
+      <dd>AFQT of 31 or higher. Below 31 an applicant is mental group IV and needs an administrative
+        review by the district commanding officer. <span class="qual">The EPM's Table 3-6 minimum is
+        actually tier-dependent &mdash; 21 for Tier I, 31 for Tier II, 50 for Tier III &mdash; but 31 is
+        the working threshold used here.</span></dd>
 
       <dt>Alpha</dt>
-      <dd>AFQT 50 or higher: mental groups I&ndash;IIIA. Bravo is 31&ndash;49.</dd>
+      <dd>AFQT of 50 or higher &mdash; mental groups I through IIIA. Bravo is IIIB, 31 to 49.
+        <span class="qual">Per MCRCO 1100.1, IIIA starts at 50, not 51.</span></dd>
 
       <dt>Success rate <span class="qual">(view)</span></dt>
-      <dd>Share of a ZIP's applicants who cleared the bar. Quality, regardless of volume.</dd>
+      <dd>Of the applicants who came out of a ZIP, what share cleared the bar. This measures the
+        <b>quality</b> of who is testing and is blind to how many there were &mdash; a ZIP sending three
+        strong applicants will outrank one sending forty good ones.</dd>
 
       <dt>Per capita <span class="qual">(view)</span></dt>
-      <dd>Qualified applicants per 1,000 residents. Yield, accounting for size. Regional baseline is
-        0.30 passers and 0.17 alphas per 1,000.</dd>
+      <dd>Qualified applicants per 1,000 residents: the count who cleared the bar, divided by the ZIP's
+        population. This measures <b>yield</b> &mdash; how much a ZIP actually produces for its size.
+        The regional baseline is 0.30 passers and 0.17 alphas per 1,000.
+        <span class="qual">Residents are people covered by 2022 IRS returns, so non-filers are missed.
+        More importantly it is total population, not the 17&ndash;24 cohort a recruiter draws from, so a
+        retirement ZIP looks worse than it deserves and a ZIP full of young families looks better. Treat
+        it as a rough size adjustment rather than a true penetration rate.</span></dd>
 
       <dt>Raw rate</dt>
-      <dd>The unadjusted figure. Jumpy &mdash; with two applicants it can only read 0%, 50% or 100%.</dd>
+      <dd>The plain figure, straight from the data, with no adjustment. Honest but jumpy &mdash; with two
+        applicants a rate can only ever read 0%, 50% or 100%, which is why it isn't what the map
+        draws.</dd>
 
       <dt>Adjusted</dt>
-      <dd>Raw, pulled toward the regional average &mdash; harder the thinner the data. A ZIP needs about
-        eight applicants to carry its own weight. This is what the map colors.</dd>
+      <dd>The raw figure pulled toward the regional average, by an amount that depends on how thin the
+        ZIP's data is. A ZIP with 70 applicants barely moves; a ZIP with one moves almost all the way to
+        the average. For rates the formula is
+        <code>(cleared&nbsp;+&nbsp;8&nbsp;&times;&nbsp;baseline)&nbsp;&divide;&nbsp;(applicants&nbsp;+&nbsp;8)</code>,
+        so a ZIP needs roughly eight applicants before it carries its own weight.
+        <span class="qual">Per-capita yields use the same idea with a Poisson prior worth two events,
+        since counts-per-population follow a different distribution than a share.</span> This is what
+        the map colors.</dd>
 
       <dt>Odds vs. base</dt>
-      <dd>The ZIP's odds divided by the region's. <b>1.00&times; is average.</b> Doubling the odds is not
-        doubling the rate: 50% to 67% is a 2&times; move.</dd>
+      <dd>How that ZIP compares with the region as a whole. Odds are
+        <code>rate&nbsp;&divide;&nbsp;(1&nbsp;&minus;&nbsp;rate)</code>, so a 60% rate is odds of 1.5;
+        dividing the ZIP's odds by the baseline odds gives the multiplier. <b>1.00&times; is exactly
+        average.</b> <span class="qual">Doubling the odds is not doubling the rate &mdash; going from 50%
+        to 67% is a 2&times; move.</span> In the per-capita view this is a straight ratio of yields
+        instead.</dd>
 
       <dt>ZIP income</dt>
-      <dd>Mean adjusted gross income per tax return, IRS 2022. Describes the area, not the applicant.</dd>
+      <dd>Mean adjusted gross income per tax return in that ZIP, from IRS Statistics of Income 2022. It
+        describes the economic conditions of the area an applicant comes from &mdash; <span class="qual">it
+        is not that applicant's or their family's income.</span></dd>
     </dl>
   </section>
 
@@ -321,11 +347,6 @@
       is a high school senior is the strongest single predictor. Reaching alpha tracks geography and
       income: ZIP mean income is the strongest univariate predictor of alpha, and applicants from the
       highest-income quartile of ZIPs reach alpha 63.8% of the time against 45.0% in the lowest.</p>
-    <p><b>What per capita can and can't tell you.</b> Residents are people covered by 2022 IRS returns,
-      so non-filers are missed. More importantly it is total population, not the 17&ndash;24 cohort a
-      recruiter actually draws from &mdash; a retirement ZIP looks worse than it deserves and a ZIP full
-      of young families looks better. Treat it as a rough size adjustment, not a true penetration rate.
-      Yields are shrunk with a Poisson prior worth two events, the same idea as the rate shrinkage above.</p>
 
     <p><b>Coverage.</b> <span id="coverage"></span> ZIP income is IRS SOI 2022 mean adjusted gross income
       per return. Positions are ZIP centroids from the Census gazetteer, so a bubble marks the center of a
@@ -478,20 +499,6 @@ function detail(d) {
       ${view === 'percap' ? `<dt>Residents</dt><dd>${d.pop == null ? '&mdash;' : d.pop.toLocaleString()}</dd>` : ''}
       <dt>${view === 'rate' ? 'Raw rate' : 'Raw per 1,000'}</dt><dd>${fmt(raw(d))}</dd>
       <dt>Adjusted</dt><dd>${fmt(prob(d))}</dd>
-      <dt>Success rate <span class="qual">(view)</span></dt>
-      <dd>Of the applicants who came out of a ZIP, what share cleared the bar. This measures the
-        <b>quality</b> of who is testing and ignores how many there were &mdash; a ZIP sending three
-        strong applicants outranks one sending forty good ones.</dd>
-
-      <dt>Per capita <span class="qual">(view)</span></dt>
-      <dd>Qualified applicants per 1,000 residents &mdash; the count who cleared the bar divided by the
-        ZIP's population. This measures <b>yield</b>: how much a ZIP actually produces for its size.
-        Baseline across the region is 0.30 passers and 0.17 alphas per 1,000. Shrunk the same way, using
-        a Poisson prior worth two events. <span class="qual">Residents are people covered by 2022 tax
-        returns, so non-filers are missed, and it is total population rather than the 17&ndash;24 cohort
-        a recruiter actually draws from &mdash; a retirement ZIP is penalized fairly, a college ZIP
-        flattered.</span></dd>
-
       <dt>ZIP income</dt><dd>${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</dd>
     </dl>`;
 }
