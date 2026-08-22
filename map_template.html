@@ -92,6 +92,7 @@
   .modes button[aria-pressed="true"] span { color: var(--accent-ink); opacity: .8; }
   .modes button:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 
+  .togglebar { display: flex; flex-wrap: wrap; gap: 12px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(142px, 1fr));
            gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px;
            overflow: hidden; }
@@ -132,6 +133,8 @@
   circle.zip:focus-visible { outline: none; stroke: var(--focus); stroke-width: 3; }
   circle.zipctx { fill: var(--ink-faint); opacity: .32; pointer-events: none; }
 
+  .popnote { margin: 0; padding: 9px 20px 12px; font-size: .74rem; color: var(--ink-faint);
+             border-top: 1px solid var(--rule); }
   .rail { border-left: 1px solid var(--rule); padding: 18px; display: flex;
           flex-direction: column; gap: 20px; }
   @media (max-width: 780px) { .rail { border-left: 0; border-top: 1px solid var(--rule); } }
@@ -211,9 +214,15 @@
       applicants came from that ZIP.</p>
   </header>
 
-  <div class="modes" role="group" aria-label="Choose outcome">
-    <button id="btnPass"  aria-pressed="true">Odds of passing<span>AFQT 31 or higher</span></button>
-    <button id="btnAlpha" aria-pressed="false">Odds of alpha<span>AFQT 50+, among those who passed</span></button>
+  <div class="togglebar">
+    <div class="modes" role="group" aria-label="Choose measure">
+      <button id="btnRate"   aria-pressed="true">Success rate<span>Share of applicants who cleared it</span></button>
+      <button id="btnPerCap" aria-pressed="false">Per capita<span>Qualified applicants per 1,000 residents</span></button>
+    </div>
+    <div class="modes" role="group" aria-label="Choose outcome">
+      <button id="btnPass"  aria-pressed="true">Passing<span>AFQT 31 or higher</span></button>
+      <button id="btnAlpha" aria-pressed="false">Alpha<span>AFQT 50 or higher</span></button>
+    </div>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -237,10 +246,10 @@
       </div>
     </div>
     <div class="mapbody">
-      <svg class="map" id="map" role="img" aria-labelledby="mapTitle"></svg>
+      <div><svg class="map" id="map" role="img" aria-labelledby="mapTitle"></svg><p class="popnote" id="popnote" hidden></p></div>
       <div class="rail">
         <div>
-          <h3>Odds vs. baseline</h3>
+          <h3 id="rampTitle">Odds vs. baseline</h3>
           <div class="ramp" id="ramp"></div>
           <div class="ramplabels"><span>0.4&times;</span><span>1.0&times;</span><span>2.5&times;</span></div>
         </div>
@@ -260,7 +269,7 @@
     <h2 id="tableTitle">Strongest and weakest ZIPs</h2>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>ZIP</th><th>Substation</th><th>Applicants</th><th>Raw rate</th><th>Adjusted</th><th>Odds vs. base</th><th>ZIP income</th></tr></thead>
+        <thead><tr><th>ZIP</th><th>Substation</th><th>Applicants</th><th id="thRaw">Raw rate</th><th>Adjusted</th><th id="thRatio">Odds vs. base</th><th>ZIP income</th></tr></thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
@@ -303,6 +312,20 @@
         Dividing the ZIP's odds by the baseline odds gives the multiplier: <b>1.00&times; is exactly
         average</b>, 2.00&times; is double the odds. <span class="qual">Double the odds is not double the
         rate &mdash; going from 50% to 67% doubles the odds.</span></dd>
+
+      <dt>Success rate <span class="qual">(view)</span></dt>
+      <dd>Of the applicants who came out of a ZIP, what share cleared the bar. This measures the
+        <b>quality</b> of who is testing and ignores how many there were &mdash; a ZIP sending three
+        strong applicants outranks one sending forty good ones.</dd>
+
+      <dt>Per capita <span class="qual">(view)</span></dt>
+      <dd>Qualified applicants per 1,000 residents &mdash; the count who cleared the bar divided by the
+        ZIP's population. This measures <b>yield</b>: how much a ZIP actually produces for its size.
+        Baseline across the region is 0.30 passers and 0.17 alphas per 1,000. Shrunk the same way, using
+        a Poisson prior worth two events. <span class="qual">Residents are people covered by 2022 tax
+        returns, so non-filers are missed, and it is total population rather than the 17&ndash;24 cohort
+        a recruiter actually draws from &mdash; a retirement ZIP is penalized fairly, a college ZIP
+        flattered.</span></dd>
 
       <dt>ZIP income</dt>
       <dd>Mean adjusted gross income per tax return in that ZIP, from IRS Statistics of Income 2022. It
@@ -365,20 +388,33 @@ const CITIES = [
 ];
 
 /* ---------- state ---------- */
-let mode = 'pass', selected = null;
+let mode = 'pass', view = 'rate', selected = null;
 // browsers restore a range input's position across reloads, so take the
 // initial threshold from the control itself rather than a hardcoded default
 let minN = +document.getElementById('minN').value;
-const val   = d => mode === 'pass' ? d.orPass  : d.orAlpha;
-const prob  = d => mode === 'pass' ? d.pPass   : d.pAlpha;
-const raw   = d => mode === 'pass' ? d.rawPass : d.rawAlpha;
-const denom = d => mode === 'pass' ? d.n       : d.nPassed;
+// Both views share one colour scale: a multiple of the command-wide baseline.
+// Only what is being multiplied changes -- a success rate, or a yield per 1,000.
+const val = d => view === 'rate'
+  ? (mode === 'pass' ? d.orPass   : d.orAlpha)
+  : (mode === 'pass' ? d.orPassPC : d.orAlphaPC);
+const prob = d => view === 'rate'
+  ? (mode === 'pass' ? d.pPass  : d.pAlpha)
+  : (mode === 'pass' ? d.pcPass : d.pcAlpha);
+const raw = d => view === 'rate'
+  ? (mode === 'pass' ? d.rawPass  : d.rawAlpha)
+  : (mode === 'pass' ? d.rawPassPC : d.rawAlphaPC);
+// Sizing stays on applicant counts in both views; per capita additionally needs
+// a population figure, so ZIPs without one drop out of that view.
+const denom = d => mode === 'pass' ? d.n : d.nPassed;
+const fmt = v => v == null ? '&mdash;'
+  : view === 'rate' ? (v * 100).toFixed(1) + '%' : v.toFixed(2);
 let rankMode = 'all', rankN = 10;
 
 // eligible = clears the minimum-applicants bar; visible = the ranked slice of
 // those that the map highlights; context = eligible but ranked out, drawn faint
 // so the geography still reads.
 const eligible = () => DATA.zips.filter(d => val(d) != null && denom(d) >= minN);
+const noPopCount = () => DATA.zips.filter(d => d.pop == null && denom(d) >= minN).length;
 function visible() {
   const e = eligible();
   if (rankMode === 'all') return e;
@@ -456,8 +492,23 @@ function detail(d) {
     <span class="chip" style="background:${rampColor(or)};color:#fff;align-self:flex-start">${or.toFixed(2)}&times; baseline</span>
     <dl>
       <dt>Applicants</dt><dd>${denom(d)}</dd>
-      <dt>Raw rate</dt><dd>${raw(d) == null ? '&mdash;' : pct(raw(d))}</dd>
-      <dt>Adjusted</dt><dd>${pct(prob(d))}</dd>
+      ${view === 'percap' ? `<dt>Residents</dt><dd>${d.pop == null ? '&mdash;' : d.pop.toLocaleString()}</dd>` : ''}
+      <dt>${view === 'rate' ? 'Raw rate' : 'Raw per 1,000'}</dt><dd>${fmt(raw(d))}</dd>
+      <dt>Adjusted</dt><dd>${fmt(prob(d))}</dd>
+      <dt>Success rate <span class="qual">(view)</span></dt>
+      <dd>Of the applicants who came out of a ZIP, what share cleared the bar. This measures the
+        <b>quality</b> of who is testing and ignores how many there were &mdash; a ZIP sending three
+        strong applicants outranks one sending forty good ones.</dd>
+
+      <dt>Per capita <span class="qual">(view)</span></dt>
+      <dd>Qualified applicants per 1,000 residents &mdash; the count who cleared the bar divided by the
+        ZIP's population. This measures <b>yield</b>: how much a ZIP actually produces for its size.
+        Baseline across the region is 0.30 passers and 0.17 alphas per 1,000. Shrunk the same way, using
+        a Poisson prior worth two events. <span class="qual">Residents are people covered by 2022 tax
+        returns, so non-filers are missed, and it is total population rather than the 17&ndash;24 cohort
+        a recruiter actually draws from &mdash; a retirement ZIP is penalized fairly, a college ZIP
+        flattered.</span></dd>
+
       <dt>ZIP income</dt><dd>${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</dd>
     </dl>`;
 }
@@ -479,8 +530,8 @@ function drawTable() {
       tr.innerHTML = `<td class="v">${d.zip}</td>
         <td style="text-align:left;color:var(--ink-soft)">${d.rss}</td>
         <td class="v">${denom(d)}</td>
-        <td class="v">${raw(d) == null ? '&mdash;' : pct(raw(d))}</td>
-        <td class="v">${pct(prob(d))}</td>
+        <td class="v">${fmt(raw(d))}</td>
+        <td class="v">${fmt(prob(d))}</td>
         <td><span class="chip" style="background:${rampColor(val(d))};color:#fff">${val(d).toFixed(2)}&times;</span></td>
         <td class="v">${d.agi == null ? '&mdash;' : '$' + Math.round(d.agi) + 'k'}</td>`;
       tr.addEventListener('click', () => { selected = d.zip; detail(d); paintSel(); });
@@ -510,19 +561,38 @@ function drawLegend() {
 }
 
 function render() {
-  document.getElementById('mapTitle').textContent =
-    mode === 'pass' ? 'Odds of passing' : 'Odds of alpha';
+  const what = mode === 'pass' ? 'passing' : 'alpha';
+  document.getElementById('mapTitle').textContent = view === 'rate'
+    ? `Odds of ${what}` : `Per-capita yield: ${what}`;
   document.getElementById('tableTitle').textContent =
-    mode === 'pass' ? 'Strongest and weakest ZIPs for passing' : 'Strongest and weakest ZIPs for alpha';
+    `Strongest and weakest ZIPs for ${what}` + (view === 'percap' ? ' per capita' : '');
+  document.getElementById('rampTitle').textContent =
+    view === 'rate' ? 'Odds vs. baseline' : 'Yield vs. baseline';
+  document.getElementById('thRaw').textContent = view === 'rate' ? 'Raw rate' : 'Raw / 1,000';
+  document.getElementById('thRatio').textContent = view === 'rate' ? 'Odds vs. base' : 'Yield vs. base';
   document.getElementById('btnPass').setAttribute('aria-pressed', mode === 'pass');
   document.getElementById('btnAlpha').setAttribute('aria-pressed', mode === 'alpha');
+  document.getElementById('btnRate').setAttribute('aria-pressed', view === 'rate');
+  document.getElementById('btnPerCap').setAttribute('aria-pressed', view === 'percap');
+  const pn = document.getElementById('popnote');
+  if (view === 'percap') {
+    const dropped = noPopCount();
+    pn.hidden = false;
+    pn.innerHTML = dropped
+      ? `${dropped} ZIP${dropped === 1 ? '' : 's'} meeting the applicant minimum have no IRS population `
+        + `figure and cannot be shown per capita. Residents are people covered by 2022 tax returns, `
+        + `which undercounts non-filers.`
+      : 'Residents are people covered by 2022 tax returns, which undercounts non-filers.';
+  } else { pn.hidden = true; }
   drawLegend(); drawStats(); drawMap(); drawTable();
   const cur = DATA.zips.find(d => d.zip === selected);
   detail(cur && val(cur) != null && denom(cur) >= minN ? cur : null);
 }
 
-document.getElementById('btnPass').onclick  = () => { mode = 'pass';  render(); };
-document.getElementById('btnAlpha').onclick = () => { mode = 'alpha'; render(); };
+document.getElementById('btnPass').onclick   = () => { mode = 'pass';   render(); };
+document.getElementById('btnAlpha').onclick  = () => { mode = 'alpha';  render(); };
+document.getElementById('btnRate').onclick   = () => { view = 'rate';   render(); };
+document.getElementById('btnPerCap').onclick = () => { view = 'percap'; render(); };
 const slider = document.getElementById('minN');
 document.getElementById('minNOut').textContent = minN;
 slider.addEventListener('input', () => {

@@ -26,9 +26,11 @@ _ZIP_TABLE = Path(__file__).parent / "data" / "zip_income_irs2022.csv"
 
 
 def load_zip_income():
-    """IRS SOI 2022 ZIP-level mean AGI per return, in $thousands."""
+    """IRS SOI 2022 ZIP aggregates: mean AGI per return ($thousands), returns filed,
+    and pop_est, the number of individuals covered by those returns.  pop_est is a
+    population proxy, not a census count -- it misses non-filers."""
     z = pd.read_csv(_ZIP_TABLE, dtype={"zipcode": str})
-    return z[["zipcode", "mean_agi_k", "n_returns"]]
+    return z[["zipcode", "mean_agi_k", "n_returns", "pop_est"]]
 
 
 def build(df, min_credential=20, min_rss=20, min_zip3=20):

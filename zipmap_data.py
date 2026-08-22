@@ -2,49 +2,71 @@ import sys, json, warnings; warnings.filterwarnings("ignore"); sys.path.insert(0
 import numpy as np, pandas as pd
 from marine_recruitment_data.ingest import load
 from marine_recruitment_data.features import build
-d=build(load("/Users/caseymoser/Downloads/RS ABQ FY25 AND FY26 ASVAB SCORES.xlsx"))
-ll=pd.read_csv("/tmp/zip_latlon.csv",dtype={"zipcode":str})
+d  = build(load("/Users/caseymoser/Downloads/RS ABQ FY25 AND FY26 ASVAB SCORES.xlsx"))
+ll = pd.read_csv("/tmp/zip_latlon.csv", dtype={"zipcode": str})
 
-K=8.0   # empirical-Bayes prior weight: a ZIP needs ~8 applicants to move off the prior
-def shrink(g, col, prior):
-    s=g[col].sum(); n=len(g)
-    return pd.Series({"n":n,"raw":s/n,"shrunk":(s+K*prior)/(n+K)})
+K = 8.0    # beta-binomial prior weight for rates
+A = 2.0    # gamma-Poisson prior events for per-capita yields
 
-rows=[]
-prior_pass = d.passed.mean()
-sub = d[d.passed==1]
-prior_alpha = sub.alpha.mean()
+sub = d[d.passed == 1]
+prior_pass, prior_alpha = d.passed.mean(), sub.alpha.mean()
 
-gp = d.groupby("zip5").apply(lambda g: shrink(g,"passed",prior_pass)).reset_index()
-ga = sub.groupby("zip5").apply(lambda g: shrink(g,"alpha",prior_alpha)).reset_index()
-m = gp.merge(ga,on="zip5",how="left",suffixes=("_pass","_alpha"))
-m = m.merge(ll,left_on="zip5",right_on="zipcode",how="left")
-inc = d.groupby("zip5").agg(agi=("mean_agi_k","first"),rss=("rss",lambda s:s.mode().iat[0])).reset_index()
-m = m.merge(inc,on="zip5",how="left")
-m = m.dropna(subset=["lat","lon"])
+g = d.groupby("zip5")
+tbl = pd.DataFrame({
+    "n":        g.size(),
+    "nPassed":  g.passed.sum(),
+    "nAlpha":   g.alpha.sum(),
+    "agi":      g.mean_agi_k.first(),
+    "pop":      g.pop_est.first(),
+    "rss":      g.rss.agg(lambda s: s.mode().iat[0]),
+}).reset_index()
 
-def odds(p): return p/(1-p)
-o_pass, o_alpha = odds(prior_pass), odds(prior_alpha)
-m["or_pass"]  = odds(m.shrunk_pass)/o_pass
-m["or_alpha"] = odds(m.shrunk_alpha)/o_alpha
+# --- rates, shrunk toward the command baseline -----------------------------
+tbl["rawPass"]   = tbl.nPassed / tbl.n
+tbl["pPass"]     = (tbl.nPassed + K*prior_pass) / (tbl.n + K)
+tbl["rawAlpha"]  = np.where(tbl.nPassed > 0, tbl.nAlpha / tbl.nPassed.replace(0, np.nan), np.nan)
+tbl["pAlpha"]    = np.where(tbl.nPassed > 0,
+                            (tbl.nAlpha + K*prior_alpha) / (tbl.nPassed + K), np.nan)
+odds = lambda p: p / (1 - p)
+tbl["orPass"]  = odds(tbl.pPass)  / odds(prior_pass)
+tbl["orAlpha"] = odds(tbl.pAlpha) / odds(prior_alpha)
 
-recs=[]
-for _,r in m.iterrows():
-    recs.append(dict(zip=r.zip5, lat=round(r.lat,4), lon=round(r.lon,4),
-        n=int(r.n_pass), nPassed=int(0 if np.isnan(r.n_alpha) else r.n_alpha),
-        pPass=round(r.shrunk_pass,4), rawPass=round(r.raw_pass,4),
-        pAlpha=None if np.isnan(r.shrunk_alpha) else round(r.shrunk_alpha,4),
-        rawAlpha=None if np.isnan(r.raw_alpha) else round(r.raw_alpha,4),
-        orPass=round(r.or_pass,3),
-        orAlpha=None if np.isnan(r.or_alpha) else round(r.or_alpha,3),
-        agi=None if np.isnan(r.agi) else round(r.agi,1), rss=r.rss))
-payload=dict(zips=recs, priorPass=round(prior_pass,4), priorAlpha=round(prior_alpha,4),
-             k=K, totalApplicants=int(len(d)), totalPassed=int(d.passed.sum()),
-             totalAlpha=int(sub.alpha.sum()), nZips=len(recs))
-json.dump(payload,open("zipmap.json","w"))
-print("zips mapped:",len(recs),"of",d.zip5.nunique())
-print(f"prior pass {prior_pass:.3f}  prior alpha|pass {prior_alpha:.3f}")
-print("\nn distribution per zip:"); print(m.n_pass.describe().round(1).to_string())
-print("\ntop 8 zips by volume:")
-print(m.nlargest(8,"n_pass")[["zip5","rss","n_pass","raw_pass","shrunk_pass","raw_alpha","shrunk_alpha","agi"]].round(3).to_string(index=False))
-print("\nlat/lon extent:",round(m.lat.min(),2),round(m.lat.max(),2),round(m.lon.min(),2),round(m.lon.max(),2))
+# --- per-capita yields: qualified applicants per 1,000 residents -----------
+tbl["popk"] = tbl["pop"] / 1000.0
+have = tbl.popk.notna() & (tbl.popk > 0)
+basePassPC  = tbl.loc[have, "nPassed"].sum() / tbl.loc[have, "popk"].sum()
+baseAlphaPC = tbl.loc[have, "nAlpha"].sum()  / tbl.loc[have, "popk"].sum()
+
+def yield_pc(count, base):
+    raw = np.where(have, count / tbl.popk, np.nan)
+    shrunk = np.where(have, (count + A) / (tbl.popk + A / base), np.nan)
+    return raw, shrunk, np.where(have, shrunk / base, np.nan)
+
+tbl["rawPassPC"], tbl["pcPass"],  tbl["orPassPC"]  = yield_pc(tbl.nPassed, basePassPC)
+tbl["rawAlphaPC"], tbl["pcAlpha"], tbl["orAlphaPC"] = yield_pc(tbl.nAlpha, baseAlphaPC)
+
+tbl = tbl.merge(ll, left_on="zip5", right_on="zipcode", how="left").dropna(subset=["lat", "lon"])
+
+def num(x, nd=3):
+    return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), nd)
+
+recs = [dict(zip=r.zip5, lat=round(r.lat,4), lon=round(r.lon,4),
+             n=int(r.n), nPassed=int(r.nPassed), nAlpha=int(r.nAlpha),
+             pop=None if np.isnan(r["pop"]) else int(r["pop"]),
+             rawPass=num(r.rawPass,4), pPass=num(r.pPass,4), orPass=num(r.orPass),
+             rawAlpha=num(r.rawAlpha,4), pAlpha=num(r.pAlpha,4), orAlpha=num(r.orAlpha),
+             rawPassPC=num(r.rawPassPC), pcPass=num(r.pcPass), orPassPC=num(r.orPassPC),
+             rawAlphaPC=num(r.rawAlphaPC), pcAlpha=num(r.pcAlpha), orAlphaPC=num(r.orAlphaPC),
+             agi=num(r.agi,1), rss=r.rss)
+        for _, r in tbl.iterrows()]
+
+json.dump(dict(zips=recs, priorPass=round(prior_pass,4), priorAlpha=round(prior_alpha,4),
+               basePassPC=round(basePassPC,4), baseAlphaPC=round(baseAlphaPC,4), k=K, a=A,
+               totalApplicants=int(len(d)), totalPassed=int(d.passed.sum()),
+               totalAlpha=int(sub.alpha.sum())), open("zipmap.json","w"))
+
+print(f"zips {len(recs)} | pop coverage {tbl['pop'].notna().mean():.1%}")
+print(f"baseline yield per 1,000 residents:  passers {basePassPC:.3f}   alphas {baseAlphaPC:.3f}")
+print("\ntop 8 by per-capita passer yield (pop>=5000):")
+q = tbl[tbl["pop"] >= 5000].nlargest(8, "pcPass")
+print(q[["zip5","rss","n","nPassed","pop","rawPassPC","pcPass","orPassPC"]].round(3).to_string(index=False))
